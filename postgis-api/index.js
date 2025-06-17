@@ -1,11 +1,10 @@
 import dotenv from "dotenv";
-
-const express = require("express");
-const cors = require("cors");
-const { Pool } = require("pg");
-const multer = require("multer");
-const fs = require("fs");
-const path = require("path");
+import express from "express";
+import cors from "cors";
+import { Pool } from "pg";
+import multer from "multer";
+import fs from "fs";
+import path from "path";
 
 const app = express();
 app.use(cors());
@@ -20,7 +19,6 @@ const pool = new Pool({
   database: process.env.DB_NAME,
   port: process.env.DB_PORT,
 });
-
 
 const upload = multer({ dest: "uploads/" });
 
