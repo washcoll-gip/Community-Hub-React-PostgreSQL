@@ -25,6 +25,14 @@ function App() {
   const [selectedMunicipality, setSelectedMunicipality] = useState("");
   const [file, setFile] = useState(null);
   const [uploading, setUploading] = useState(false);
+  const [countyData, setCountyData] = useState(null);
+
+  useEffect(() => {
+    fetch("http://localhost:5000/api/counties")
+      .then((res) => res.json())
+      .then((data) => setCountyData(data))
+      .catch((err) => console.error("Error fetching counties:", err));
+  }, []);
 
   useEffect(() => {
     fetch("http://localhost:5000/api/municipalities")
@@ -133,11 +141,26 @@ function App() {
       >
         <TileLayer
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-          attribution='&copy; OpenStreetMap contributors'
+          attribution="&copy; OpenStreetMap contributors"
         />
+        {countyData && (
+          <GeoJSON
+            data={countyData}
+            style={{
+              color: "#000000",
+              weight: 1.5,
+              fillOpacity: 0,
+              dashArray: "4",
+            }}
+            onEachFeature={(feature, layer) => {
+              const countyName = feature.properties.COUNTY;
+              layer.bindTooltip(`County: ${countyName}`, { permanent: false });
+            }}
+          />
+        )}
         {geoData && (
           <GeoJSON
-            key={JSON.stringify(geoData)}
+            key={`${selectedMunicipality}-${geoData?.features?.length || 0}`}
             data={geoData}
             style={(feature) => {
               const defaultColor = "#3388ff";

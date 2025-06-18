@@ -48,16 +48,31 @@ for feature in data["features"]:
             landvpa, txbl_val, jurscode, acctid, city, zipcode, ownname1, ownname2,
             landuseu3, lu, desclu, descstyl, descbldg, nfmlndvl, nfmimpvl, nfmttlvl,
             bldg_story, resident, merge_, new_merge, notes, downtown, fid1, cityname,
-            insidecore, outsidecore, yearbuiltcat, impvalperacre, dt_easton, developed, geom
+            insidecore, outsidecore, yearbuiltcat, impvalperacre, dt_easton, developed, geom,
+            vpa_decile
         ) VALUES (
             %(municipality_id)s, %(OBJECTID)s, %(MergeID)s, %(ADDRESS)s, %(YearBuilt)s, %(CALC_AREA)s, %(U3Value)s, %(VPA)s,
             %(LandVPA)s, %(Txbl_Val)s, %(JURSCODE)s, %(ACCTID)s, %(CITY)s, %(ZIPCODE)s, %(OWNNAME1)s, %(OWNNAME2)s,
             %(LandUseU3)s, %(LU)s, %(DESCLU)s, %(DESCSTYL)s, %(DESCBLDG)s, %(NFMLNDVL)s, %(NFMIMPVL)s, %(NFMTTLVL)s,
             %(BLDG_STORY)s, %(RESIDENT)s, %(Merge_)s, %(New_Merge)s, %(Notes)s, %(Downtown)s, %(FID1)s, %(CityName)s,
             %(InsideCore)s, %(OutsideCore)s, %(YearBuiltCat)s, %(ImpValPerAcre)s, %(DT_Easton)s, %(developed)s,
-            ST_GeomFromGeoJSON(%(geom)s)
+            ST_GeomFromGeoJSON(%(geom)s),
+            NULL
         )
     """, props)
+
+cur.execute("""
+    WITH deciles AS (
+        SELECT id,
+               NTILE(10) OVER (ORDER BY vpa) AS vpa_decile
+        FROM parcel
+        WHERE municipality_id = %s
+    )
+    UPDATE parcel p
+    SET vpa_decile = d.vpa_decile
+    FROM deciles d
+    WHERE p.id = d.id
+""", (municipality_id,))
 
 conn.commit()
 cur.close()

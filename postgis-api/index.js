@@ -29,6 +29,33 @@ function toCamelCase(str) {
     .replace(/^(.)/, (_, c) => c.toLowerCase());
 }
 
+app.get("/api/counties", async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT 
+        *, ST_AsGeoJSON(geom)::json AS geometry 
+      FROM county
+    `);
+
+    const geojson = {
+      type: "FeatureCollection",
+      features: result.rows.map(row => {
+        const { geometry, geom, ...properties } = row;
+        return {
+          type: "Feature",
+          geometry,
+          properties
+        };
+      })
+    };
+
+    res.json(geojson);
+  } catch (error) {
+    console.error("Error fetching counties:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
 app.post("/api/upload", upload.single("file"), async (req, res) => {
   try {
     const filePath = req.file.path;
@@ -66,14 +93,16 @@ app.post("/api/upload", upload.single("file"), async (req, res) => {
           landvpa, txbl_val, jurscode, acctid, city, zipcode, ownname1, ownname2,
           landuseu3, lu, desclu, descstyl, descbldg, nfmlndvl, nfmimpvl, nfmttlvl,
           bldg_story, resident, merge_, new_merge, notes, downtown, fid1, cityname,
-          insidecore, outsidecore, yearbuiltcat, impvalperacre, dt_easton, developed, geom
+          insidecore, outsidecore, yearbuiltcat, impvalperacre, dt_easton, developed, geom,
+          vpa_decile
         ) VALUES (
           $1, $2, $3, $4, $5, $6, $7, $8,
           $9, $10, $11, $12, $13, $14, $15, $16,
           $17, $18, $19, $20, $21, $22, $23, $24,
           $25, $26, $27, $28, $29, $30, $31, $32,
           $33, $34, $35, $36, $37, $38,
-          ST_SetSRID(ST_GeomFromGeoJSON($39), 4326)
+          ST_SetSRID(ST_GeomFromGeoJSON($39), 4326),
+          NULL
         )
       `, [
         municipalityId,
@@ -84,6 +113,19 @@ app.post("/api/upload", upload.single("file"), async (req, res) => {
         props.InsideCore, props.OutsideCore, props.YearBuiltCat, props.ImpValPerAcre, props.DT_Easton, props.developed, geom
       ]);
     }
+
+    await pool.query(`
+      WITH deciles AS (
+        SELECT id,
+               NTILE(10) OVER (ORDER BY vpa) AS vpa_decile
+        FROM parcel
+        WHERE municipality_id = $1
+      )
+      UPDATE parcel p
+      SET vpa_decile = d.vpa_decile
+      FROM deciles d
+      WHERE p.id = d.id;
+    `, [municipalityId]);
 
     fs.unlinkSync(filePath);
 
@@ -101,26 +143,17 @@ app.get("/api/parcels", async (req, res) => {
     const { municipality } = req.query;
 
     let baseQuery = `
-      WITH filtered_parcels AS (
-        SELECT p.*, m.name AS municipality_name
-        FROM parcel p
-        JOIN municipality m ON p.municipality_id = m.id
-        ${municipality ? `WHERE LOWER(m.name) = LOWER($1)` : ""}
-      ),
-      parcels_with_decile AS (
-        SELECT *,
-          NTILE(10) OVER (ORDER BY vpa) AS vpa_decile
-        FROM filtered_parcels
-      )
-      SELECT
-        id, municipality_id, objectid, mergeid, address, yearbuilt, calc_area, u3value, vpa,
-        landvpa, txbl_val, jurscode, acctid, city, zipcode, ownname1, ownname2,
-        landuseu3, lu, desclu, descstyl, descbldg, nfmlndvl, nfmimpvl, nfmttlvl,
-        bldg_story, resident, merge_, new_merge, notes, downtown, fid1, cityname,
-        insidecore, outsidecore, yearbuiltcat, impvalperacre, dt_easton, developed, geom,
-        municipality_name, vpa_decile,
-        ST_AsGeoJSON(geom)::json AS geometry
-      FROM parcels_with_decile
+      SELECT 
+        p.id, p.municipality_id, p.objectid, p.mergeid, p.address, p.yearbuilt, p.calc_area, p.u3value, p.vpa,
+        p.landvpa, p.txbl_val, p.jurscode, p.acctid, p.city, p.zipcode, p.ownname1, p.ownname2,
+        p.landuseu3, p.lu, p.desclu, p.descstyl, p.descbldg, p.nfmlndvl, p.nfmimpvl, p.nfmttlvl,
+        p.bldg_story, p.resident, p.merge_, p.new_merge, p.notes, p.downtown, p.fid1, p.cityname,
+        p.insidecore, p.outsidecore, p.yearbuiltcat, p.impvalperacre, p.dt_easton, p.developed,
+        ST_AsGeoJSON(p.geom)::json AS geometry,
+        p.vpa_decile
+      FROM parcel p
+      JOIN municipality m ON p.municipality_id = m.id
+      ${municipality ? `WHERE LOWER(m.name) = LOWER($1)` : ""}
     `;
 
     const params = municipality ? [municipality] : [];
@@ -141,7 +174,7 @@ app.get("/api/parcels", async (req, res) => {
 
     res.json(geojson);
   } catch (error) {
-    console.error("Error fetching data:", error);
+    console.error("Error fetching parcels:", error);
     res.status(500).json({ error: "Internal server error" });
   }
 });
