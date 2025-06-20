@@ -21,11 +21,12 @@ function getColorByDecile(decile) {
 
 function App() {
   const [geoData, setGeoData] = useState(null);
+  const [countyData, setCountyData] = useState(null);
   const [municipalities, setMunicipalities] = useState([]);
   const [selectedMunicipality, setSelectedMunicipality] = useState("");
+  const [selectedCounty, setSelectedCounty] = useState("");
   const [file, setFile] = useState(null);
   const [uploading, setUploading] = useState(false);
-  const [countyData, setCountyData] = useState(null);
 
   useEffect(() => {
     fetch("http://localhost:5000/api/counties")
@@ -108,6 +109,25 @@ function App() {
         }}
       >
         <label>
+          Filter by county:
+          <select
+            value={selectedCounty}
+            onChange={(e) => setSelectedCounty(e.target.value)}
+          >
+            <option value="">All</option>
+            {countyData &&
+              countyData.features.map((f) => {
+                const name = f.properties.name;
+                return (
+                  <option key={name} value={name}>
+                    {name}
+                  </option>
+                );
+              })}
+          </select>
+        </label>
+
+        <label>
           Filter by municipality:
           <select
             value={selectedMunicipality}
@@ -145,7 +165,15 @@ function App() {
         />
         {countyData && (
           <GeoJSON
-            data={countyData}
+            key={`county-layer-${selectedCounty || "all"}`}
+            data={{
+              ...countyData,
+              features: selectedCounty
+                ? countyData.features.filter(
+                    (f) => f.properties.name === selectedCounty
+                  )
+                : countyData.features,
+            }}
             style={{
               color: "#000000",
               weight: 1.5,
@@ -153,7 +181,7 @@ function App() {
               dashArray: "4",
             }}
             onEachFeature={(feature, layer) => {
-              const countyName = feature.properties.COUNTY;
+              const countyName = feature.properties.name;
               layer.bindTooltip(`County: ${countyName}`, { permanent: false });
             }}
           />
