@@ -25,16 +25,20 @@ with open(filepath, "r") as f:
 for feature in data["features"]:
     props = feature["properties"]
     geom = json.dumps(feature["geometry"])
+    county_name = props.get("COUNTY")
 
     cur.execute("""
-        INSERT INTO county (
-            name, district, tsd_id, objectid, county_fip, county_num, shape_area, shape_length, geom
-        ) VALUES (
-            %s, %s, %s, %s, %s, %s, %s, %s,
-            ST_SetSRID(ST_GeomFromGeoJSON(%s), 4326)
-        )
+        UPDATE county SET
+            district = %s,
+            tsd_id = %s,
+            objectid = %s,
+            county_fip = %s,
+            county_num = %s,
+            shape_area = %s,
+            shape_length = %s,
+            geom = ST_SetSRID(ST_GeomFromGeoJSON(%s), 4326)
+        WHERE name = %s
     """, (
-        props.get("COUNTY"),
         props.get("DISTRICT"),
         props.get("TSD_ID"),
         props.get("OBJECTID_1"),
@@ -42,7 +46,8 @@ for feature in data["features"]:
         props.get("COUNTYNUM"),
         props.get("Shape__Area"),
         props.get("Shape__Length"),
-        geom
+        geom,
+        county_name
     ))
 
 conn.commit()
