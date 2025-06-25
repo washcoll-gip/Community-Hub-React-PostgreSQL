@@ -203,7 +203,13 @@ function App() {
               }
 
               const decile = feature.properties.vpa_decile;
-              const decileColor = getColorByDecile(decile);
+              let decileColor;
+
+              if (decile > 0) {
+                decileColor = getColorByDecile(decile);
+              } else {
+                decileColor = defaultColor;
+              }
 
               return {
                 color: decileColor,
