@@ -36,32 +36,35 @@ function App() {
   }, []);
 
   useEffect(() => {
-    fetch("http://localhost:5000/api/municipalities")
-      .then((res) => res.json())
-      .then((data) => setMunicipalities(data));
-  }, []);
+    if (selectedCounty) {
+      fetch(`http://localhost:5000/api/municipalities?county=${selectedCounty}`)
+        .then((res) => res.json())
+        .then((data) => setMunicipalities(data));
+    } else {
+      setMunicipalities([]);
+      setSelectedMunicipality("");
+    }
+  }, [selectedCounty]);
 
   const fetchData = () => {
-    const query = selectedMunicipality
-      ? `?municipality=${selectedMunicipality.toLowerCase()}`
-      : "";
-    fetch(`http://localhost:5000/api/parcels${query}`)
-      .then((res) => res.json())
-      .then((data) => setGeoData(data))
-      .catch((err) => console.error("Error fetching GeoJSON:", err));
+    if (selectedMunicipality) {
+      fetch(`http://localhost:5000/api/parcels?municipality=${selectedMunicipality}`)
+        .then((res) => res.json())
+        .then((data) => setGeoData(data));
+    } else if (selectedCounty) {
+      fetch(`http://localhost:5000/api/parcels?county=${selectedCounty}`)
+        .then((res) => res.json())
+        .then((data) => setGeoData(data));
+    } else {
+      setGeoData(null);
+    }
   };
 
   useEffect(() => {
     fetchData();
-  }, [selectedMunicipality]);
+  }, [selectedCounty, selectedMunicipality]);
 
   const handleFileChange = (e) => setFile(e.target.files[0]);
-
-  const fetchMunicipalities = () => {
-    fetch("http://localhost:5000/api/municipalities")
-      .then((res) => res.json())
-      .then((data) => setMunicipalities(data));
-  };
 
   const handleUpload = async (e) => {
     e.preventDefault();
@@ -78,7 +81,13 @@ function App() {
       });
 
       fetchData();
-      fetchMunicipalities();
+
+      if (selectedCounty) {
+        fetch(`http://localhost:5000/api/municipalities?county=${selectedCounty}`)
+          .then((res) => res.json())
+          .then((data) => setMunicipalities(data));
+      }
+
       alert("GeoJSON uploaded successfully!");
     } catch (err) {
       console.error("Upload failed:", err);
@@ -112,7 +121,15 @@ function App() {
           Filter by county:
           <select
             value={selectedCounty}
-            onChange={(e) => setSelectedCounty(e.target.value)}
+            onChange={(e) => {
+              const county = e.target.value;
+              setSelectedCounty(county);
+
+              if (county === "") {
+                setSelectedMunicipality("");
+                setGeoData(null);
+              }
+            }}
           >
             <option value="">All</option>
             {countyData &&
@@ -132,13 +149,20 @@ function App() {
           <select
             value={selectedMunicipality}
             onChange={(e) => setSelectedMunicipality(e.target.value)}
+            disabled={!selectedCounty}
           >
-            <option value="">All</option>
-            {municipalities.map((m) => (
-              <option key={m} value={m}>
-                {m.charAt(0).toUpperCase() + m.slice(1)}
-              </option>
-            ))}
+            {!selectedCounty ? (
+              <option value="">-</option>
+            ) : (
+              <>
+                <option value="">All</option>
+                {municipalities.map((m) => (
+                  <option key={m} value={m}>
+                    {m}
+                  </option>
+                ))}
+              </>
+            )}
           </select>
         </label>
 
@@ -180,6 +204,7 @@ function App() {
               fillOpacity: 0,
               dashArray: "4",
             }}
+            interactive={false}
             onEachFeature={(feature, layer) => {
               const countyName = feature.properties.name;
               layer.bindTooltip(`County: ${countyName}`, { permanent: false });
@@ -188,33 +213,21 @@ function App() {
         )}
         {geoData && (
           <GeoJSON
-            key={`${selectedMunicipality}-${geoData?.features?.length || 0}`}
+            key={`${selectedMunicipality || selectedCounty}-${geoData?.features?.length || 0}`}
             data={geoData}
             style={(feature) => {
+              const decile = feature.properties.vpa_decile;
               const defaultColor = "#3388ff";
 
-              if (!selectedMunicipality) {
-                return {
-                  color: defaultColor,
-                  weight: 2,
-                  fillColor: defaultColor,
-                  fillOpacity: 0.5,
-                };
-              }
-
-              const decile = feature.properties.vpa_decile;
-              let decileColor;
-
-              if (decile > 0) {
-                decileColor = getColorByDecile(decile);
-              } else {
-                decileColor = defaultColor;
-              }
+              const color =
+                selectedMunicipality && decile > 0
+                  ? getColorByDecile(decile)
+                  : defaultColor;
 
               return {
-                color: decileColor,
+                color,
                 weight: 2,
-                fillColor: decileColor,
+                fillColor: color,
                 fillOpacity: 0.5,
               };
             }}

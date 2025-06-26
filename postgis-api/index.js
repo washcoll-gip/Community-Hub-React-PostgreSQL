@@ -35,6 +35,7 @@ app.get("/api/counties", async (req, res) => {
       SELECT 
         *, ST_AsGeoJSON(geom)::json AS geometry 
       FROM county
+      ORDER BY name ASC
     `);
 
     const geojson = {
@@ -166,7 +167,7 @@ app.post("/api/upload", upload.single("file"), async (req, res) => {
 
 app.get("/api/parcels", async (req, res) => {
   try {
-    const { municipality } = req.query;
+    const { municipality, county } = req.query;
 
     let baseQuery = `
       SELECT 
@@ -179,10 +180,23 @@ app.get("/api/parcels", async (req, res) => {
         p.vpa_decile
       FROM parcel p
       JOIN municipality m ON p.municipality_id = m.id
-      ${municipality ? `WHERE LOWER(m.name) = LOWER($1)` : ""}
     `;
+    
+    const params = [];
 
-    const params = municipality ? [municipality] : [];
+    if (municipality) {
+      baseQuery += ` WHERE LOWER(m.name) = LOWER($1)`;
+      params.push(municipality);
+    } else if (county) {
+      baseQuery += `
+        JOIN municipality_county mc ON m.id = mc.municipality_id
+        JOIN county c ON c.id = mc.county_id
+        WHERE LOWER(c.name) = LOWER($1)
+      `;
+      params.push(county);
+    } else {
+      return res.json({ type: "FeatureCollection", features: [] });
+    }
 
     const result = await pool.query(baseQuery, params);
 
@@ -206,8 +220,23 @@ app.get("/api/parcels", async (req, res) => {
 });
 
 app.get("/api/municipalities", async (req, res) => {
+  const { county } = req.query;
+
   try {
-    const result = await pool.query("SELECT name FROM municipality ORDER BY name");
+    let result;
+    if (county) {
+      result = await pool.query(`
+        SELECT m.name
+        FROM municipality m
+        JOIN municipality_county mc ON m.id = mc.municipality_id
+        JOIN county c ON mc.county_id = c.id
+        WHERE LOWER(c.name) = LOWER($1)
+        ORDER BY m.name
+      `, [county]);
+    } else {
+      result = await pool.query("SELECT name FROM municipality ORDER BY name");
+    }
+
     res.json(result.rows.map(row => row.name));
   } catch (err) {
     console.error("Error fetching municipalities:", err);
