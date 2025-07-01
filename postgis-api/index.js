@@ -12,7 +12,7 @@ const __dirname = dirname(__filename);
 
 const app = express();
 app.use(cors({
-  origin: "https://es-community-hub.netlify.app/"
+  origin: "https://es-community-hub.netlify.app"
 }));
 app.use(express.json());
 
