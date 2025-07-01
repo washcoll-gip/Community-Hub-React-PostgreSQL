@@ -10,13 +10,16 @@ filepath = os.path.abspath(os.path.join(geojson_folder, filename))
 
 load_dotenv()
 
-conn = psycopg2.connect(
-    dbname=os.getenv("DB_NAME"),
-    user=os.getenv("DB_USER"),
-    password=os.getenv("DB_PASSWORD"),
-    host=os.getenv("DB_HOST"),
-    port=os.getenv("DB_PORT")
-)
+connection_url = os.getenv("NETFILY_DATABASE_URL")
+
+conn = psycopg2.connect(connection_url)
+# conn = psycopg2.connect(
+#     dbname=os.getenv("DB_NAME"),
+#     user=os.getenv("DB_USER"),
+#     password=os.getenv("DB_PASSWORD"),
+#     host=os.getenv("DB_HOST"),
+#     port=os.getenv("DB_PORT")
+# )
 cur = conn.cursor()
 
 with open(filepath, "r") as f:

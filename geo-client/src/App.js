@@ -3,6 +3,8 @@ import { MapContainer, TileLayer, GeoJSON } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 
+const API_URL = process.env.REACT_APP_API_URL;
+
 const colorsByDecile = [
   "#306322",
   "#559131",
@@ -37,7 +39,7 @@ function App() {
   const [downloadOpen, setDownloadOpen] = useState(false);
 
   useEffect(() => {
-    fetch("http://localhost:5000/api/counties")
+    fetch(`${API_URL}/api/counties`)
       .then((res) => res.json())
       .then((data) => setCountyData(data))
       .catch((err) => console.error("Error fetching counties:", err));
@@ -45,7 +47,7 @@ function App() {
 
   useEffect(() => {
     if (selectedCounty) {
-      fetch(`http://localhost:5000/api/municipalities?county=${selectedCounty}`)
+      fetch(`${API_URL}/api/municipalities?county=${selectedCounty}`)
         .then((res) => res.json())
         .then((data) => setMunicipalities(data));
     } else {
@@ -60,23 +62,23 @@ function App() {
 
   const fetchData = () => {
     if (selectedMunicipality) {
-      fetch(`http://localhost:5000/api/parcels?municipality=${selectedMunicipality}`)
+      fetch(`${API_URL}/api/parcels?municipality=${selectedMunicipality}`)
         .then((res) => res.json())
         .then((data) => setGeoData(data));
     } else if (selectedCounty) {
-      fetch(`http://localhost:5000/api/parcels?county=${selectedCounty}`)
+      fetch(`${API_URL}/api/parcels?county=${selectedCounty}`)
         .then((res) => res.json())
         .then((data) => setGeoData(data));
     } else {
       setGeoData(null);
     }
 
-    fetch("http://localhost:5000/api/foodaccesspoints")
+    fetch(`${API_URL}/api/foodaccesspoints`)
       .then((res) => res.json())
       .then((data) => setFoodPoints(data))
       .catch((err) => console.error("Error fetching food access points:", err));
 
-    fetch("http://localhost:5000/api/files")
+    fetch(`${API_URL}/api/files`)
       .then((res) => res.json())
       .then((data) => setUploadedFiles(data))
       .catch((err) => console.error("Error fetching file list:", err));
@@ -101,7 +103,7 @@ function App() {
       formData.append("municipality", uploadMunicipality);
       try {
         setUploading(true);
-        await fetch("http://localhost:5000/api/upload-landvpa", {
+        await fetch(`${API_URL}/api/upload-landvpa`, {
           method: "POST",
           body: formData,
         });
@@ -117,7 +119,7 @@ function App() {
     } else if (uploadType === "foodaccesspoints") {
       try {
         setUploading(true);
-        await fetch("http://localhost:5000/api/upload-foodaccesspoints", {
+        await fetch(`${API_URL}/api/upload-foodaccesspoints`, {
           method: "POST",
           body: formData,
         });
@@ -243,7 +245,7 @@ function App() {
                           const val = e.target.value;
                           setUploadCounty(val);
                           setUploadMunicipality("");
-                          fetch(`http://localhost:5000/api/municipalities?county=${val}`)
+                          fetch(`${API_URL}/api/municipalities?county=${val}`)
                             .then((res) => res.json())
                             .then((data) => setMunicipalities(data));
                         }}
@@ -343,7 +345,7 @@ function App() {
                     <h3>{type}</h3>
                     {Array.isArray(files) && files.map(file => (
                       <div key={file.filename}>
-                        <a href={`http://localhost:5000/api/files/download/${file.filename}`} download>
+                        <a href={`${API_URL}/api/files/download/${file.filename}`} download>
                           {file.filename}
                         </a>
                         <span> - {new Date(file.upload_date).toLocaleString()}</span>
