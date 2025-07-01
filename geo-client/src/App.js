@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { MapContainer, TileLayer, GeoJSON } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
@@ -56,11 +56,7 @@ function App() {
     }
   }, [selectedCounty]);
 
-  useEffect(() => {
-    fetchData();
-  }, [selectedCounty, selectedMunicipality]);
-
-  const fetchData = () => {
+  const fetchData = useCallback(() => {
     if (selectedMunicipality) {
       fetch(`${API_URL}/api/parcels?municipality=${selectedMunicipality}`)
         .then((res) => res.json())
@@ -82,7 +78,11 @@ function App() {
       .then((res) => res.json())
       .then((data) => setUploadedFiles(data))
       .catch((err) => console.error("Error fetching file list:", err));
-  };
+  }, [selectedCounty, selectedMunicipality]);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
 
   const handleUploadSubmit = async (e) => {
     e.preventDefault();
