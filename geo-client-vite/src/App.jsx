@@ -150,7 +150,7 @@ function App() {
 
   const handleUploadSubmit = async (e) => {
     e.preventDefault();
-
+    
     if (!uploadFile) {
       addNotification("Please select a .geojson file", 'warning');
       return;
@@ -164,19 +164,16 @@ function App() {
     const formData = new FormData();
     formData.append("file", uploadFile);
 
-    if (uploadType === "landvpa") {
-      formData.append("municipality", uploadMunicipality);
-    }
-
     try {
-      await uploadFileRequest(`${API_URL}/api/upload/${uploadType}`, formData);
-      addNotification(
-        uploadType === "landvpa"
-          ? "LandVPA data uploaded successfully!"
-          : "Food Access Points uploaded successfully!",
-        "success"
-      );
-
+      if (uploadType === "landvpa") {
+        formData.append("municipality", uploadMunicipality);
+      }
+      await uploadFileRequest(`/api/upload/${uploadType}`, formData);
+      const labels = {
+        landvpa: "LandVPA data",
+        foodaccesspoints: "Food Access Points",
+      };
+      addNotification(`${labels[uploadType]} uploaded successfully!`, "success");
       fetchData();
       handleUploadModalClose();
     } catch (err) {
