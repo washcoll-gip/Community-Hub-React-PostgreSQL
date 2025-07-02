@@ -86,6 +86,7 @@ function App() {
 
   const handleUploadSubmit = async (e) => {
     e.preventDefault();
+
     if (!uploadFile) {
       alert("Please select a .geojson file");
       return;
@@ -101,37 +102,30 @@ function App() {
 
     if (uploadType === "landvpa") {
       formData.append("municipality", uploadMunicipality);
-      try {
-        setUploading(true);
-        await fetch(`${API_URL}/api/upload-landvpa`, {
-          method: "POST",
-          body: formData,
-        });
-        alert("LandVPA uploaded successfully");
-        fetchData();
-        setModalOpen(false);
-      } catch (err) {
-        console.error("Upload error:", err);
-        alert("Error uploading LandVPA");
-      } finally {
-        setUploading(false);
-      }
-    } else if (uploadType === "foodaccesspoints") {
-      try {
-        setUploading(true);
-        await fetch(`${API_URL}/api/upload-foodaccesspoints`, {
-          method: "POST",
-          body: formData,
-        });
-        alert("Food Access Points uploaded successfully");
-        fetchData();
-        setModalOpen(false);
-      } catch (err) {
-        console.error("Upload error:", err);
-        alert("Error uploading Food Access Points");
-      } finally {
-        setUploading(false);
-      }
+    }
+
+    const typeLabels = {
+      landvpa: "LandVPA",
+      foodaccesspoints: "Food Access Points",
+    };
+
+    const endpoint = `${API_URL}/api/upload/${uploadType}`;
+    const label = typeLabels[uploadType] || "Data";
+
+    try {
+      setUploading(true);
+      await fetch(endpoint, {
+        method: "POST",
+        body: formData,
+      });
+      alert(`${label} uploaded successfully`);
+      fetchData();
+      setModalOpen(false);
+    } catch (err) {
+      console.error("Upload error:", err);
+      alert(`Error uploading ${label}`);
+    } finally {
+      setUploading(false);
     }
   };
 

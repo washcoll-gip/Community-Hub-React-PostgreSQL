@@ -1,0 +1,234 @@
+import pool from "./pool.js";
+
+export const createTables = async () => {
+  const createSQL = `
+    CREATE EXTENSION IF NOT EXISTS postgis;
+
+    DROP TABLE IF EXISTS parcel CASCADE;
+    DROP TABLE IF EXISTS municipality CASCADE;
+    DROP TABLE IF EXISTS county CASCADE;
+    DROP TABLE IF EXISTS municipality_county CASCADE;
+    DROP TABLE IF EXISTS food_access_points;
+    DROP TABLE IF EXISTS uploaded_files;
+
+    CREATE TABLE IF NOT EXISTS county (
+      id SERIAL PRIMARY KEY,
+      name TEXT,
+      district INTEGER,
+      tsd_id INTEGER,
+      objectid INTEGER,
+      county_fip INTEGER,
+      county_num INTEGER,
+      shape_area DOUBLE PRECISION,
+      shape_length DOUBLE PRECISION,
+      geom GEOMETRY(MultiPolygon, 4326)
+    );
+
+    CREATE TABLE IF NOT EXISTS municipality (
+      id SERIAL PRIMARY KEY,
+      name TEXT UNIQUE NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS municipality_county (
+      municipality_id INTEGER NOT NULL REFERENCES municipality(id) ON DELETE CASCADE,
+      county_id INTEGER NOT NULL REFERENCES county(id) ON DELETE CASCADE,
+      PRIMARY KEY (municipality_id, county_id)
+    );
+
+    CREATE TABLE IF NOT EXISTS parcel (
+        id SERIAL PRIMARY KEY,
+        municipality_id INTEGER REFERENCES municipality(id),
+        objectid INTEGER,
+        mergeid TEXT,
+        address TEXT,
+        yearbuilt INTEGER,
+        calc_area DOUBLE PRECISION,
+        u3value INTEGER,
+        vpa DOUBLE PRECISION,
+        landvpa INTEGER,
+        txbl_val INTEGER,
+        jurscode TEXT,
+        acctid TEXT,
+        city TEXT,
+        zipcode TEXT,
+        ownname1 TEXT,
+        ownname2 TEXT,
+        landuseu3 TEXT,
+        lu TEXT,
+        desclu TEXT,
+        descstyl TEXT,
+        descbldg TEXT,
+        nfmlndvl INTEGER,
+        nfmimpvl INTEGER,
+        nfmttlvl INTEGER,
+        bldg_story INTEGER,
+        resident INTEGER,
+        merge_ TEXT,
+        new_merge TEXT,
+        notes TEXT,
+        downtown TEXT,
+        fid1 TEXT,
+        cityname TEXT,
+        insidecore TEXT,
+        outsidecore TEXT,
+        yearbuiltcat TEXT,
+        impvalperacre DOUBLE PRECISION,
+        dt_easton TEXT,
+        developed TEXT,
+        geom GEOMETRY(MultiPolygon, 4326),
+        vpa_decile INTEGER
+    );
+
+    CREATE TABLE IF NOT EXISTS food_access_points ( 
+        id SERIAL PRIMARY KEY,
+        objectid INTEGER,
+        user_name TEXT,
+        user_common_names TEXT,
+        user_category TEXT,
+        user_address TEXT,
+        user_city TEXT,
+        user_state TEXT,
+        user_zip TEXT,
+        user_phone TEXT,
+        user_website TEXT,
+        last_edited_date TIMESTAMP,
+        user_latitude DOUBLE PRECISION,
+        user_longitude DOUBLE PRECISION,
+        geometry GEOMETRY(Point, 4326)
+    );
+
+    CREATE TABLE IF NOT EXISTS uploaded_files (
+      id SERIAL PRIMARY KEY,
+      filename TEXT NOT NULL,
+      upload_type TEXT NOT NULL,
+      upload_date TIMESTAMP DEFAULT NOW()
+    );
+
+    INSERT INTO county (name) VALUES 
+    ('Caroline'),
+    ('Cecil'),
+    ('Dorchester'),
+    ('Kent'),
+    ('Queen Anne''s'),
+    ('Somerset'),
+    ('Talbot'),
+    ('Wicomico'),
+    ('Worchester');
+
+    INSERT INTO municipality (name) VALUES 
+    ('Barclay'),
+    ('Berlin'),
+    ('Betterton'),
+    ('Brookview'),
+    ('Cambridge'),
+    ('Centreville'),
+    ('Chestertown'),
+    ('Church Creek'),
+    ('Church Hill'),
+    ('Crisfield'),
+    ('Delmar'),
+    ('Denton'),
+    ('East New Market'),
+    ('Easton'),
+    ('Eldorado'),
+    ('Federalsburg'),
+    ('Fruitland'),
+    ('Galena'),
+    ('Galestown'),
+    ('Goldsboro'),
+    ('Greensboro'),
+    ('Hebron'),
+    ('Henderson'),
+    ('Hillsboro'),
+    ('Hurlock'),
+    ('Mardela Springs'),
+    ('Marydel'),
+    ('Millington'),
+    ('Ocean City'),
+    ('Oxford'),
+    ('Pittsville'),
+    ('Pocomoke City'),
+    ('Preston'),
+    ('Princess Anne'),
+    ('Queen Anne'),
+    ('Queenstown'),
+    ('Ridgely'),
+    ('Rock Hall'),
+    ('Salisbury'),
+    ('Secretary'),
+    ('Sharptown'),
+    ('Snow Hill'),
+    ('St Michaels'),
+    ('Sudlersville'),
+    ('Templeville'),
+    ('Trappe'),
+    ('Vienna'),
+    ('Willards');
+
+    INSERT INTO municipality_county (municipality_id, county_id)
+    SELECT m.id, c.id
+    FROM municipality m, county c
+    WHERE c.name = 'Caroline' AND m.name IN (
+      'Denton', 'Federalsburg', 'Goldboro', 'Greensboro',
+      'Henderson', 'Hillsboro', 'Marydel', 'Preston',
+      'Ridgely', 'Templeville'
+    );
+
+    INSERT INTO municipality_county (municipality_id, county_id)
+    SELECT m.id, c.id
+    FROM municipality m, county c
+    WHERE c.name = 'Dorchester' AND m.name IN (
+      'Brookview', 'Cambridge', 'Church Creek', 'East New Market',
+      'Eldorado', 'Galestown', 'Hurlock', 'Secretary', 'Vienna'
+    );
+
+    INSERT INTO municipality_county (municipality_id, county_id)
+    SELECT m.id, c.id
+    FROM municipality m, county c
+    WHERE c.name = 'Kent' AND m.name IN (
+      'Betterton', 'Chestertown', 'Galena', 'Millington', 'Rock Hall'
+    );
+
+    INSERT INTO municipality_county (municipality_id, county_id)
+    SELECT m.id, c.id
+    FROM municipality m, county c
+    WHERE c.name = 'Queen Anne''s' AND m.name IN (
+      'Barclay', 'Centreville', 'Church Hill', 'Queen Anne',
+      'Queenstown', 'Sudlersville', 'Templeville'
+    );
+
+    INSERT INTO municipality_county (municipality_id, county_id)
+    SELECT m.id, c.id
+    FROM municipality m, county c
+    WHERE c.name = 'Somerset' AND m.name IN ('Crisfield', 'Princess Anne');
+
+    INSERT INTO municipality_county (municipality_id, county_id)
+    SELECT m.id, c.id
+    FROM municipality m, county c
+    WHERE c.name = 'Talbot' AND m.name IN (
+      'Easton', 'Oxford', 'Queen Anne', 'St Michaels', 'Trappe'
+    );
+
+    INSERT INTO municipality_county (municipality_id, county_id)
+    SELECT m.id, c.id
+    FROM municipality m, county c
+    WHERE c.name = 'Wicomico' AND m.name IN (
+      'Delmar', 'Fruitland', 'Hebron', 'Mardela Springs',
+      'Pittsville', 'Salisbury', 'Sharptown', 'Willards'
+    );
+
+    INSERT INTO municipality_county (municipality_id, county_id)
+    SELECT m.id, c.id
+    FROM municipality m, county c
+    WHERE c.name = 'Worchester' AND m.name IN (
+      'Berlin', 'Ocean City', 'Pocomoke City', 'Snow Hill'
+    );
+  `;
+
+  try {
+    await pool.query(createSQL);
+    console.log("Tables created successfully.");
+  } catch (err) {
+    console.error("Error creating tables:", err);
+  }
+};

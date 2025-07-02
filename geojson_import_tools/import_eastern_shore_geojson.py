@@ -12,7 +12,9 @@ load_dotenv()
 
 connection_url = os.getenv("NETFILY_DATABASE_URL")
 
+# To use a direct connection URL
 conn = psycopg2.connect(connection_url)
+# To use a local PostgreSQL database
 # conn = psycopg2.connect(
 #     dbname=os.getenv("DB_NAME"),
 #     user=os.getenv("DB_USER"),
