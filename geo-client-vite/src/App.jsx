@@ -2,11 +2,11 @@ import { useEffect, useState, useCallback } from "react";
 import "leaflet/dist/leaflet.css";
 
 // Components
-import MapView from "./components/MapView";
-import FilterControls from "./components/FilterControls";
-import UploadModal from "./components/UploadModal";
-import DownloadModal from "./components/DownloadModal";
-import NotificationSystem from "./components/NotificationSystem";
+import MapView from "./components/MapView.jsx";
+import FilterControls from "./components/FilterControls.jsx";
+import UploadModal from "./components/UploadModal.jsx";
+import DownloadModal from "./components/DownloadModal.jsx";
+import NotificationSystem from "./components/NotificationSystem.jsx";
 
 // Hooks
 import { useNotifications, useApiRequest } from "./hooks";
