@@ -219,8 +219,6 @@ function App() {
         uploading={uploading}
         onSubmit={handleUploadSubmit}
         countyData={countyData}
-        municipalities={municipalities}
-        setMunicipalities={setMunicipalities}
       />
 
       {/* Download Modal */}

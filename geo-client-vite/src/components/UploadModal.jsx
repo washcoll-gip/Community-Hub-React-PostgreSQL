@@ -1,4 +1,4 @@
-import React from 'react';
+import React, {useState, useEffect} from 'react';
 
 const UploadModal = ({ 
   API_URL,
@@ -14,10 +14,16 @@ const UploadModal = ({
   setUploadFile,
   uploading,
   onSubmit,
-  countyData,
-  municipalities,
-  setMunicipalities
+  countyData
 }) => {
+  const [municipalitiesLocal, setMunicipalitiesLocal] = useState([]);
+
+  useEffect(() => {
+    if (!isOpen) {
+      setMunicipalitiesLocal([]);
+    }
+  }, [isOpen]);
+
   if (!isOpen) return null;
 
   const handleBackdropClick = (e) => {
@@ -97,6 +103,7 @@ const UploadModal = ({
                   setUploadCounty("");
                   setUploadMunicipality("");
                   setUploadFile(null);
+                  setMunicipalitiesLocal([]);
                 }}
                 style={{ 
                   width: "100%", 
@@ -143,8 +150,8 @@ const UploadModal = ({
                         setUploadMunicipality("");
                         fetch(`${API_URL}/api/municipalities?county=${val}`)
                           .then(res => res.json())
-                          .then(data => setMunicipalities(data))
-                          .catch(() => setMunicipalities([]));
+                          .then(data => setMunicipalitiesLocal(data))
+                          .catch(() => setMunicipalitiesLocal([]));
                       }}
                       style={{ 
                         width: "100%", 
@@ -187,7 +194,7 @@ const UploadModal = ({
                       required
                     >
                       <option value="">Choose Municipality</option>
-                      {municipalities.map((m) => (
+                      {municipalitiesLocal.map((m) => (
                         <option key={m} value={m}>{m}</option>
                       ))}
                     </select>
