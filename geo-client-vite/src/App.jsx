@@ -205,6 +205,7 @@ function App() {
 
       {/* Upload Modal */}
       <UploadModal
+        API_URL={API_URL}
         isOpen={modalOpen}
         onClose={handleUploadModalClose}
         uploadType={uploadType}
@@ -219,6 +220,7 @@ function App() {
         onSubmit={handleUploadSubmit}
         countyData={countyData}
         municipalities={municipalities}
+        setMunicipalities={setMunicipalities}
       />
 
       {/* Download Modal */}

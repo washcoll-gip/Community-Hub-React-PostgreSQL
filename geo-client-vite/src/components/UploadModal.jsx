@@ -1,6 +1,7 @@
 import React from 'react';
 
 const UploadModal = ({ 
+  API_URL,
   isOpen, 
   onClose, 
   uploadType, 
@@ -14,7 +15,8 @@ const UploadModal = ({
   uploading,
   onSubmit,
   countyData,
-  municipalities
+  municipalities,
+  setMunicipalities
 }) => {
   if (!isOpen) return null;
 
@@ -139,6 +141,10 @@ const UploadModal = ({
                         const val = e.target.value;
                         setUploadCounty(val);
                         setUploadMunicipality("");
+                        fetch(`${API_URL}/api/municipalities?county=${val}`)
+                          .then(res => res.json())
+                          .then(data => setMunicipalities(data))
+                          .catch(() => setMunicipalities([]));
                       }}
                       style={{ 
                         width: "100%", 
