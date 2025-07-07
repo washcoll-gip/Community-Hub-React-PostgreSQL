@@ -8,6 +8,7 @@ import countiesRoutes from "./routes/counties.js";
 import municipalitiesRoutes from "./routes/municipalities.js";
 import foodAccessRoutes from "./routes/foodAccess.js";
 import filesRoutes from "./routes/files.js";
+import exportRoutes from "./routes/export.js";
 
 import { createTables } from "./db/initTables.js";
 
@@ -34,6 +35,7 @@ app.use("/api/counties", countiesRoutes);
 app.use("/api/municipalities", municipalitiesRoutes);
 app.use("/api/foodaccesspoints", foodAccessRoutes);
 app.use("/api/files", filesRoutes);
+app.use("/api/export", exportRoutes);
 
 createTables();
 
