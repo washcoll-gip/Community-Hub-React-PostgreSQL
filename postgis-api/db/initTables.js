@@ -4,6 +4,13 @@ export const createTables = async () => {
   const createSQL = `
     CREATE EXTENSION IF NOT EXISTS postgis;
 
+    DROP TABLE IF EXISTS parcel CASCADE;
+    DROP TABLE IF EXISTS municipality CASCADE;
+    DROP TABLE IF EXISTS county CASCADE;
+    DROP TABLE IF EXISTS municipality_county CASCADE;
+    DROP TABLE IF EXISTS food_access_points;
+    DROP TABLE IF EXISTS uploaded_files;
+
     CREATE TABLE IF NOT EXISTS county (
       id SERIAL PRIMARY KEY,
       name TEXT UNIQUE,
@@ -106,7 +113,8 @@ export const createTables = async () => {
     ('Somerset'),
     ('Talbot'),
     ('Wicomico'),
-    ('Worchester');
+    ('Worcester')
+    ON CONFLICT (name) DO NOTHING;
 
     INSERT INTO municipality (name) VALUES 
     ('Barclay'),
@@ -156,7 +164,8 @@ export const createTables = async () => {
     ('Templeville'),
     ('Trappe'),
     ('Vienna'),
-    ('Willards');
+    ('Willards')
+    ON CONFLICT (name) DO NOTHING;
 
     INSERT INTO municipality_county (municipality_id, county_id)
     SELECT m.id, c.id
@@ -209,7 +218,11 @@ export const createTables = async () => {
     INSERT INTO municipality_county (municipality_id, county_id)
     SELECT m.id, c.id
     FROM municipality m, county c
-    WHERE c.name = 'Somerset' AND m.name IN ('Crisfield', 'Princess Anne');
+    WHERE c.name = 'Somerset' AND m.name IN ('Crisfield', 'Princess Anne')
+    AND NOT EXISTS (
+      SELECT 1 FROM municipality_county mc
+      WHERE mc.municipality_id = m.id AND mc.county_id = c.id
+    );
 
     INSERT INTO municipality_county (municipality_id, county_id)
     SELECT m.id, c.id
@@ -237,7 +250,7 @@ export const createTables = async () => {
     INSERT INTO municipality_county (municipality_id, county_id)
     SELECT m.id, c.id
     FROM municipality m, county c
-    WHERE c.name = 'Worchester' AND m.name IN (
+    WHERE c.name = 'Worcester' AND m.name IN (
       'Berlin', 'Ocean City', 'Pocomoke City', 'Snow Hill'
     )
     AND NOT EXISTS (
