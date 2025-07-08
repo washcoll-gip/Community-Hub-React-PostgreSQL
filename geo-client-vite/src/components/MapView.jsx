@@ -15,6 +15,7 @@ const MapView = ({
         [37.8, -76.5],
         [39.8, -74.8],
       ]}
+      zoomControl={false}
       style={{ height: "100%", width: "100%" }}
     >
       <TileLayer

@@ -21,8 +21,9 @@ const FilterControls = ({
       background: "white",
       borderRadius: "8px",
       boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
-      minWidth: isCollapsed ? "auto" : "280px",
-      transition: "all 0.3s ease"
+      minWidth: isCollapsed ? "90px" : "280px",
+      transition: "all 0.3s ease",
+      transformOrigin: "top right"
     }}>
       {/* Header with toggle button */}
       <div style={{

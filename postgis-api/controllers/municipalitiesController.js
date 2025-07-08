@@ -12,7 +12,7 @@ export const getMunicipalities = async (req, res) => {
         JOIN municipality_county mc ON m.id = mc.municipality_id
         JOIN county c ON mc.county_id = c.id
         WHERE LOWER(c.name) = LOWER($1)
-        ORDER BY m.name
+        ORDER BY m.id
       `, [county]);
     } else {
       result = await pool.query("SELECT name FROM municipality ORDER BY name");

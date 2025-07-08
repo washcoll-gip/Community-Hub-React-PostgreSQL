@@ -148,10 +148,36 @@ const UploadModal = ({
                         const val = e.target.value;
                         setUploadCounty(val);
                         setUploadMunicipality("");
-                        fetch(`${API_URL}/api/municipalities?county=${val}`)
-                          .then(res => res.json())
-                          .then(data => setMunicipalitiesLocal(data))
-                          .catch(() => setMunicipalitiesLocal([]));
+                        fetch(`${API_URL}/api/files`)
+                          .then((res) => res.json())
+                          .then((files) => {
+                            const uploadedMunicipalities = (files.landvpa || [])
+                              .map(f => {
+                                const match = f.filename.match(/^(.+?)_VPA\.geojson$/i);
+                                if (!match) return null;
+
+                                return match[1]
+                                  .replace(/_/g, " ")
+                                  .toLowerCase()
+                                  .split(" ")
+                                  .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+                                  .join(" ")
+                                  .trim();
+                              })
+                              .filter(Boolean);
+                            fetch(`${API_URL}/api/municipalities?county=${val}`)
+                              .then((res) => res.json())
+                              .then((data) => {
+                                const filtered = data.filter(m => !uploadedMunicipalities.includes(m));
+                                setMunicipalitiesLocal(filtered);
+                              })
+                              .catch(() => {
+                                setMunicipalitiesLocal([]);
+                              });
+                          })
+                          .catch(() => {
+                            setMunicipalitiesLocal([]);
+                          });
                       }}
                       style={{ 
                         width: "100%", 

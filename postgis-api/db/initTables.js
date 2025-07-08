@@ -4,6 +4,13 @@ export const createTables = async () => {
   const createSQL = `
     CREATE EXTENSION IF NOT EXISTS postgis;
 
+    DROP TABLE IF EXISTS parcel CASCADE;
+    DROP TABLE IF EXISTS municipality CASCADE;
+    DROP TABLE IF EXISTS county CASCADE;
+    DROP TABLE IF EXISTS municipality_county CASCADE;
+    DROP TABLE IF EXISTS food_access_points;
+    DROP TABLE IF EXISTS uploaded_files;
+
     CREATE TABLE IF NOT EXISTS county (
       id SERIAL PRIMARY KEY,
       name TEXT UNIQUE,
@@ -110,6 +117,14 @@ export const createTables = async () => {
     ON CONFLICT (name) DO NOTHING;
 
     INSERT INTO municipality (name) VALUES 
+    ('Caroline Rural'),
+    ('Dorchester Rural'),
+    ('Kent Rural'),
+    ('Queen Anne''s Rural'),
+    ('Somerset Rural'),
+    ('Talbot Rural'),
+    ('Wicomico Rural'),
+    ('Worcester Rural'),
     ('Barclay'),
     ('Berlin'),
     ('Betterton'),
@@ -164,9 +179,10 @@ export const createTables = async () => {
     SELECT m.id, c.id
     FROM municipality m, county c
     WHERE c.name = 'Caroline' AND m.name IN (
-      'Denton', 'Federalsburg', 'Goldboro', 'Greensboro',
+      'Denton', 'Federalsburg', 'Goldsboro', 'Greensboro',
       'Henderson', 'Hillsboro', 'Marydel', 'Preston',
-      'Ridgely', 'Templeville'
+      'Ridgely', 'Templeville',
+      'Caroline Rural'
     )
     AND NOT EXISTS (
       SELECT 1 FROM municipality_county mc
@@ -178,7 +194,8 @@ export const createTables = async () => {
     FROM municipality m, county c
     WHERE c.name = 'Dorchester' AND m.name IN (
       'Brookview', 'Cambridge', 'Church Creek', 'East New Market',
-      'Eldorado', 'Galestown', 'Hurlock', 'Secretary', 'Vienna'
+      'Eldorado', 'Galestown', 'Hurlock', 'Secretary', 'Vienna',
+      'Dorchester Rural'
     )
     AND NOT EXISTS (
       SELECT 1 FROM municipality_county mc
@@ -189,7 +206,8 @@ export const createTables = async () => {
     SELECT m.id, c.id
     FROM municipality m, county c
     WHERE c.name = 'Kent' AND m.name IN (
-      'Betterton', 'Chestertown', 'Galena', 'Millington', 'Rock Hall'
+      'Betterton', 'Chestertown', 'Galena', 'Millington', 'Rock Hall',
+      'Kent Rural'
     )
     AND NOT EXISTS (
       SELECT 1 FROM municipality_county mc
@@ -201,7 +219,8 @@ export const createTables = async () => {
     FROM municipality m, county c
     WHERE c.name = 'Queen Anne''s' AND m.name IN (
       'Barclay', 'Centreville', 'Church Hill', 'Queen Anne',
-      'Queenstown', 'Sudlersville', 'Templeville'
+      'Queenstown', 'Sudlersville', 'Templeville',
+      'Queen Anne''s Rural'
     )
     AND NOT EXISTS (
       SELECT 1 FROM municipality_county mc
@@ -211,7 +230,10 @@ export const createTables = async () => {
     INSERT INTO municipality_county (municipality_id, county_id)
     SELECT m.id, c.id
     FROM municipality m, county c
-    WHERE c.name = 'Somerset' AND m.name IN ('Crisfield', 'Princess Anne')
+    WHERE c.name = 'Somerset' AND m.name IN (
+      'Crisfield', 'Princess Anne',
+      'Somerset Rural'
+    )
     AND NOT EXISTS (
       SELECT 1 FROM municipality_county mc
       WHERE mc.municipality_id = m.id AND mc.county_id = c.id
@@ -221,7 +243,8 @@ export const createTables = async () => {
     SELECT m.id, c.id
     FROM municipality m, county c
     WHERE c.name = 'Talbot' AND m.name IN (
-      'Easton', 'Oxford', 'Queen Anne', 'St Michaels', 'Trappe'
+      'Easton', 'Oxford', 'Queen Anne', 'St Michaels', 'Trappe',
+      'Talbot Rural'
     )
     AND NOT EXISTS (
       SELECT 1 FROM municipality_county mc
@@ -233,7 +256,8 @@ export const createTables = async () => {
     FROM municipality m, county c
     WHERE c.name = 'Wicomico' AND m.name IN (
       'Delmar', 'Fruitland', 'Hebron', 'Mardela Springs',
-      'Pittsville', 'Salisbury', 'Sharptown', 'Willards'
+      'Pittsville', 'Salisbury', 'Sharptown', 'Willards',
+      'Wicomico Rural'
     )
     AND NOT EXISTS (
       SELECT 1 FROM municipality_county mc
@@ -244,7 +268,8 @@ export const createTables = async () => {
     SELECT m.id, c.id
     FROM municipality m, county c
     WHERE c.name = 'Worcester' AND m.name IN (
-      'Berlin', 'Ocean City', 'Pocomoke City', 'Snow Hill'
+      'Berlin', 'Ocean City', 'Pocomoke City', 'Snow Hill',
+      'Worcester Rural'
     )
     AND NOT EXISTS (
       SELECT 1 FROM municipality_county mc

@@ -7,6 +7,7 @@ import FilterControls from "./components/FilterControls.jsx";
 import UploadModal from "./components/UploadModal.jsx";
 import DownloadModal from "./components/DownloadModal.jsx";
 import NotificationSystem from "./components/NotificationSystem.jsx";
+import LayerToggleControls from "./components/LayerToggleControls.jsx";
 
 // Hooks
 import { useNotifications, useApiRequest } from "./hooks";
@@ -57,6 +58,11 @@ function App() {
   const { notifications, addNotification, dismissNotification } = useNotifications();
   const { loading: uploading, uploadFile: uploadFileRequest, request } = useApiRequest(API_URL);
 
+  //Toggle layer visibility
+  const [showLandVPA, setShowLandVPA] = useState(true);
+  const [showFoodAccess, setShowFoodAccess] = useState(true);
+
+
   // Load initial data
   useEffect(() => {
     const loadCounties = async () => {
@@ -95,22 +101,31 @@ function App() {
   const fetchData = useCallback(async () => {
     try {
       // Load parcel data based on selection
-      if (selectedMunicipality) {
-        const data = await request(`/api/parcels?municipality=${selectedMunicipality}`);
-        setGeoData(data);
-      } else if (selectedCounty) {
-        const data = await request(`/api/parcels?county=${selectedCounty}`);
-        setGeoData(data);
+      if (showLandVPA) {
+        if (selectedMunicipality) {
+          const data = await request(`/api/parcels?municipality=${selectedMunicipality}`);
+          setGeoData(data);
+        } else if (selectedCounty) {
+          const data = await request(`/api/parcels?county=${selectedCounty}`);
+          setGeoData(data);
+        } else {
+          setGeoData(null);
+        }
       } else {
         setGeoData(null);
       }
 
       // Load food access points
-      try {
-        const foodData = await request('/api/foodaccesspoints');
-        setFoodPoints(foodData);
-      } catch (err) {
-        console.warn('Food access points not available:', err);
+      if (showFoodAccess) {
+        try {
+          const foodData = await request('/api/foodaccesspoints');
+          setFoodPoints(foodData);
+        } catch (err) {
+          console.warn('Food access points not available:', err);
+          setFoodPoints(null);
+        }
+      } else {
+        setFoodPoints(null);
       }
 
       // Load uploaded files list
@@ -123,7 +138,14 @@ function App() {
     } catch (err) {
       addNotification('Failed to load map data', 'error');
     }
-  }, [selectedCounty, selectedMunicipality, request, addNotification]);
+  }, [
+    selectedCounty,
+    selectedMunicipality,
+    showLandVPA,
+    showFoodAccess,
+    request,
+    addNotification
+  ]);
 
   useEffect(() => {
     fetchData();
@@ -229,6 +251,17 @@ function App() {
         selectedCounty={selectedCounty}
         selectedMunicipality={selectedMunicipality}
         API_URL={API_URL}
+      />
+
+      {/* Layer Toggle Controls */}
+      <LayerToggleControls
+        showLandVPA={showLandVPA}
+        setShowLandVPA={setShowLandVPA}
+        showFoodAccess={showFoodAccess}
+        setShowFoodAccess={setShowFoodAccess}
+        uploadedFiles={uploadedFiles}
+        API_URL={API_URL}
+        selectedCounty={selectedCounty}
       />
 
       {/* Map View */}
