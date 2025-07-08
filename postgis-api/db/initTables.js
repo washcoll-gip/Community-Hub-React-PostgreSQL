@@ -6,7 +6,7 @@ export const createTables = async () => {
 
     CREATE TABLE IF NOT EXISTS county (
       id SERIAL PRIMARY KEY,
-      name TEXT,
+      name TEXT UNIQUE,
       district INTEGER,
       tsd_id INTEGER,
       objectid INTEGER,
@@ -165,6 +165,10 @@ export const createTables = async () => {
       'Denton', 'Federalsburg', 'Goldboro', 'Greensboro',
       'Henderson', 'Hillsboro', 'Marydel', 'Preston',
       'Ridgely', 'Templeville'
+    )
+    AND NOT EXISTS (
+      SELECT 1 FROM municipality_county mc
+      WHERE mc.municipality_id = m.id AND mc.county_id = c.id
     );
 
     INSERT INTO municipality_county (municipality_id, county_id)
@@ -173,6 +177,10 @@ export const createTables = async () => {
     WHERE c.name = 'Dorchester' AND m.name IN (
       'Brookview', 'Cambridge', 'Church Creek', 'East New Market',
       'Eldorado', 'Galestown', 'Hurlock', 'Secretary', 'Vienna'
+    )
+    AND NOT EXISTS (
+      SELECT 1 FROM municipality_county mc
+      WHERE mc.municipality_id = m.id AND mc.county_id = c.id
     );
 
     INSERT INTO municipality_county (municipality_id, county_id)
@@ -180,6 +188,10 @@ export const createTables = async () => {
     FROM municipality m, county c
     WHERE c.name = 'Kent' AND m.name IN (
       'Betterton', 'Chestertown', 'Galena', 'Millington', 'Rock Hall'
+    )
+    AND NOT EXISTS (
+      SELECT 1 FROM municipality_county mc
+      WHERE mc.municipality_id = m.id AND mc.county_id = c.id
     );
 
     INSERT INTO municipality_county (municipality_id, county_id)
@@ -188,6 +200,10 @@ export const createTables = async () => {
     WHERE c.name = 'Queen Anne''s' AND m.name IN (
       'Barclay', 'Centreville', 'Church Hill', 'Queen Anne',
       'Queenstown', 'Sudlersville', 'Templeville'
+    )
+    AND NOT EXISTS (
+      SELECT 1 FROM municipality_county mc
+      WHERE mc.municipality_id = m.id AND mc.county_id = c.id
     );
 
     INSERT INTO municipality_county (municipality_id, county_id)
@@ -200,6 +216,10 @@ export const createTables = async () => {
     FROM municipality m, county c
     WHERE c.name = 'Talbot' AND m.name IN (
       'Easton', 'Oxford', 'Queen Anne', 'St Michaels', 'Trappe'
+    )
+    AND NOT EXISTS (
+      SELECT 1 FROM municipality_county mc
+      WHERE mc.municipality_id = m.id AND mc.county_id = c.id
     );
 
     INSERT INTO municipality_county (municipality_id, county_id)
@@ -208,6 +228,10 @@ export const createTables = async () => {
     WHERE c.name = 'Wicomico' AND m.name IN (
       'Delmar', 'Fruitland', 'Hebron', 'Mardela Springs',
       'Pittsville', 'Salisbury', 'Sharptown', 'Willards'
+    )
+    AND NOT EXISTS (
+      SELECT 1 FROM municipality_county mc
+      WHERE mc.municipality_id = m.id AND mc.county_id = c.id
     );
 
     INSERT INTO municipality_county (municipality_id, county_id)
@@ -215,6 +239,10 @@ export const createTables = async () => {
     FROM municipality m, county c
     WHERE c.name = 'Worchester' AND m.name IN (
       'Berlin', 'Ocean City', 'Pocomoke City', 'Snow Hill'
+    )
+    AND NOT EXISTS (
+      SELECT 1 FROM municipality_county mc
+      WHERE mc.municipality_id = m.id AND mc.county_id = c.id
     );
   `;
 
