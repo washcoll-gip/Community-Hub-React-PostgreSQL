@@ -1,13 +1,15 @@
 import { useEffect, useState, useCallback } from "react";
 import "leaflet/dist/leaflet.css";
+import React from "react";
+import { ThemeProvider, CssBaseline } from "@mui/material";
+import theme from "./theme";
 
 // Components
 import MapView from "./components/MapView.jsx";
-import FilterControls from "./components/FilterControls.jsx";
-import UploadModal from "./components/UploadModal.jsx";
-import DownloadModal from "./components/DownloadModal.jsx";
+import SidebarControls from "./components/SidebarControls.jsx";
+import RightSidebar from "./components/RightSidebar.jsx";
 import NotificationSystem from "./components/NotificationSystem.jsx";
-import LayerToggleControls from "./components/LayerToggleControls.jsx";
+import LeftSidebar from "./components/LeftSidebar.jsx";
 
 // Hooks
 import { useNotifications, useApiRequest } from "./hooks";
@@ -62,6 +64,19 @@ function App() {
   const [showLandVPA, setShowLandVPA] = useState(true);
   const [showFoodAccess, setShowFoodAccess] = useState(true);
 
+  // Polygon drawing state
+  const [isDrawingPolygon, setIsDrawingPolygon] = useState(false);
+  const [drawnPolygon, setDrawnPolygon] = useState(null);
+
+  // Handler to start drawing
+  const handleDrawPolygon = () => setIsDrawingPolygon(true);
+  // Handler when polygon is drawn
+  const handlePolygonDrawn = (geojson) => {
+    setDrawnPolygon(geojson);
+    setIsDrawingPolygon(false);
+  };
+  // Handler to cancel drawing
+  const handleDrawCancel = () => setIsDrawingPolygon(false);
 
   // Load initial data
   useEffect(() => {
@@ -204,76 +219,97 @@ function App() {
   };
 
   return (
-    <div style={{ height: "100vh", position: "relative", fontFamily: "system-ui, -apple-system, sans-serif" }}>
-      {/* Notification System */}
-      <NotificationSystem 
-        notifications={notifications}
-        onDismiss={dismissNotification}
-      />
+    <ThemeProvider theme={theme}>
+      <CssBaseline />
+      <div style={{ height: "100vh", position: "relative", fontFamily: "system-ui, -apple-system, sans-serif" }}>
+        {/* Minimalistic Header with Login */}
+        <div style={{
+          position: 'absolute', top: 0, left: 0, right: 0, height: 44, background: '#f1f3f6', borderBottom: '1px solid #e0e0e0', display: 'flex', alignItems: 'center', justifyContent: 'space-between', zIndex: 1201, padding: '0 1.5em', fontSize: 15, fontWeight: 600, color: '#222', letterSpacing: 0.2
+        }}>
+          <span>Community Hub</span>
+          <button style={{ background: 'none', border: 'none', color: '#1976d2', fontSize: 13, cursor: 'pointer', fontWeight: 500, padding: '4px 12px' }}>Login</button>
+        </div>
 
-      {/* Filter Controls */}
-      <FilterControls
-        countyData={countyData}
-        municipalities={municipalities}
-        selectedCounty={selectedCounty}
-        selectedMunicipality={selectedMunicipality}
-        onCountyChange={handleCountyChange}
-        onMunicipalityChange={handleMunicipalityChange}
-        onUploadClick={() => setModalOpen(true)}
-        onDownloadClick={() => setDownloadOpen(true)}
-        isCollapsed={controlsCollapsed}
-        onToggleCollapse={() => setControlsCollapsed(!controlsCollapsed)}
-      />
+        {/* Notification System */}
+        <NotificationSystem 
+          notifications={notifications}
+          onDismiss={dismissNotification}
+        />
 
-      {/* Upload Modal */}
-      <UploadModal
-        API_URL={API_URL}
-        isOpen={modalOpen}
-        onClose={handleUploadModalClose}
-        uploadType={uploadType}
-        setUploadType={setUploadType}
-        uploadCounty={uploadCounty}
-        setUploadCounty={setUploadCounty}
-        uploadMunicipality={uploadMunicipality}
-        setUploadMunicipality={setUploadMunicipality}
-        uploadFile={uploadFile}
-        setUploadFile={setUploadFile}
-        uploading={uploading}
-        onSubmit={handleUploadSubmit}
-        countyData={countyData}
-      />
+        {/* Stack controls and modals on the left */}
+        <div style={{ position: 'absolute', top: 44, left: 0, zIndex: 10, height: 'calc(100vh - 44px)', pointerEvents: 'auto' }}>
+          <LeftSidebar
+            showLandVPA={showLandVPA}
+            setShowLandVPA={setShowLandVPA}
+            showFoodAccess={showFoodAccess}
+            setShowFoodAccess={setShowFoodAccess}
+            uploadedFiles={uploadedFiles}
+            API_URL={API_URL}
+            selectedCounty={selectedCounty}
+            countyData={countyData}
+            municipalities={municipalities}
+            selectedMunicipality={selectedMunicipality}
+            onCountyChange={handleCountyChange}
+            onMunicipalityChange={handleMunicipalityChange}
+            onDrawPolygon={handleDrawPolygon}
+            isDrawingPolygon={isDrawingPolygon}
+            onClearPolygon={handleDrawCancel}
+            onUploadClick={() => setModalOpen(true)}
+            onDownloadClick={() => setDownloadOpen(true)}
+            isCollapsed={controlsCollapsed}
+            onToggleCollapse={() => setControlsCollapsed(!controlsCollapsed)}
+          />
+        </div>
 
-      {/* Download Modal */}
-      <DownloadModal
-        isOpen={downloadOpen}
-        onClose={() => setDownloadOpen(false)}
-        uploadedFiles={uploadedFiles}
-        selectedCounty={selectedCounty}
-        selectedMunicipality={selectedMunicipality}
-        API_URL={API_URL}
-      />
+        {/* Upload Modal (always on top) */}
+        <div style={{ pointerEvents: 'auto' }}>
+          <RightSidebar
+            API_URL={API_URL}
+            modalOpen={modalOpen}
+            handleUploadModalClose={handleUploadModalClose}
+            uploadType={uploadType}
+            setUploadType={setUploadType}
+            uploadCounty={uploadCounty}
+            setUploadCounty={setUploadCounty}
+            uploadMunicipality={uploadMunicipality}
+            setUploadMunicipality={setUploadMunicipality}
+            uploadFile={uploadFile}
+            setUploadFile={setUploadFile}
+            uploading={uploading}
+            handleUploadSubmit={handleUploadSubmit}
+            countyData={countyData}
+            downloadOpen={downloadOpen}
+            setDownloadOpen={setDownloadOpen}
+            uploadedFiles={uploadedFiles}
+            selectedCounty={selectedCounty}
+            selectedMunicipality={selectedMunicipality}
+          />
+        </div>
 
-      {/* Layer Toggle Controls */}
-      <LayerToggleControls
-        showLandVPA={showLandVPA}
-        setShowLandVPA={setShowLandVPA}
-        showFoodAccess={showFoodAccess}
-        setShowFoodAccess={setShowFoodAccess}
-        uploadedFiles={uploadedFiles}
-        API_URL={API_URL}
-        selectedCounty={selectedCounty}
-      />
+        {/* Map View */}
+        <div style={{ position: 'absolute', inset: 0, zIndex: 0 }}>
+          <MapView
+            countyData={countyData}
+            geoData={geoData}
+            foodPoints={foodPoints}
+            selectedCounty={selectedCounty}
+            selectedMunicipality={selectedMunicipality}
+            getColorByDecile={getColorByDecile}
+            isDrawingPolygon={isDrawingPolygon}
+            onPolygonDrawn={handlePolygonDrawn}
+            onDrawCancel={handleDrawCancel}
+            drawnPolygon={drawnPolygon}
+          />
+        </div>
 
-      {/* Map View */}
-      <MapView
-        countyData={countyData}
-        geoData={geoData}
-        foodPoints={foodPoints}
-        selectedCounty={selectedCounty}
-        selectedMunicipality={selectedMunicipality}
-        getColorByDecile={getColorByDecile}
-      />
-    </div>
+        {/* Minimalistic Footer */}
+        <div style={{
+          position: 'absolute', left: 0, right: 0, bottom: 0, height: 32, background: '#f1f3f6', borderTop: '1px solid #e0e0e0', textAlign: 'center', fontSize: 11, color: '#888', zIndex: 1201, display: 'flex', alignItems: 'center', justifyContent: 'center'
+        }}>
+          &copy; {new Date().getFullYear()} Community Hub
+        </div>
+      </div>
+    </ThemeProvider>
   );
 }
 

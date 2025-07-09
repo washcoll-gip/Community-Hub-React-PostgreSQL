@@ -1,5 +1,6 @@
 import { MapContainer, TileLayer, GeoJSON } from "react-leaflet";
 import L from "leaflet";
+import RectangleDrawControl from "./PolygonDrawControl";
 
 const MapView = ({ 
   countyData, 
@@ -7,7 +8,11 @@ const MapView = ({
   foodPoints, 
   selectedCounty, 
   selectedMunicipality,
-  getColorByDecile 
+  getColorByDecile,
+  isDrawingPolygon,
+  onPolygonDrawn,
+  onDrawCancel,
+  drawnPolygon
 }) => {
   return (
     <MapContainer
@@ -15,13 +20,24 @@ const MapView = ({
         [37.8, -76.5],
         [39.8, -74.8],
       ]}
-      zoomControl={false}
       style={{ height: "100%", width: "100%" }}
     >
       <TileLayer
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         attribution="&copy; OpenStreetMap contributors"
       />
+      
+      {/* Rectangle Drawing Control */}
+      <RectangleDrawControl
+        active={isDrawingPolygon}
+        onRectangleDrawn={onPolygonDrawn}
+        onCancel={onDrawCancel}
+      />
+      
+      {/* Drawn Rectangle Display */}
+      {drawnPolygon && (
+        <GeoJSON data={drawnPolygon} style={{ color: '#1976d2', weight: 2, fillOpacity: 0.1 }} />
+      )}
       
       {/* County Boundaries Layer */}
       {countyData && (

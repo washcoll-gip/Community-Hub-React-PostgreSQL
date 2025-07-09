@@ -1,4 +1,12 @@
 import React, { useState } from "react";
+import LayersIcon from '@mui/icons-material/Layers';
+import VisibilityIcon from '@mui/icons-material/Visibility';
+import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
+import ExpandLessIcon from '@mui/icons-material/ExpandLess';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import DownloadIcon from '@mui/icons-material/Download';
+import InsertDriveFileIcon from '@mui/icons-material/InsertDriveFile';
+import InboxIcon from '@mui/icons-material/Inbox';
 
 const LayerToggleControls = ({
   showLandVPA,
@@ -16,7 +24,6 @@ const LayerToggleControls = ({
   });
 
   const onToggleCollapse = () => setIsCollapsed((prev) => !prev);
-
   const toggleSection = (type) => {
     setExpandedSections((prev) => ({
       ...prev,
@@ -27,18 +34,20 @@ const LayerToggleControls = ({
   return (
     <div
       style={{
-        position: "absolute",
-        top: "1em",
-        left: "1em",
-        zIndex: 1000,
-        background: "white",
-        borderRadius: "8px",
-        boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
-        width: isCollapsed ? "90px" : "340px",
-        maxHeight: "90vh",
+        background: "#f7f7f9",
+        borderRadius: 0,
+        boxShadow: "none",
+        width: "100%",
+        height: "100vh",
+        maxHeight: "none",
         overflowY: "auto",
-        transition: "width 0.3s ease",
         userSelect: "none",
+        border: "none",
+        display: 'flex',
+        flexDirection: 'column',
+        fontSize: '13px',
+        fontFamily: 'system-ui, -apple-system, sans-serif',
+        color: '#222',
       }}
     >
       {/* Header with toggle button */}
@@ -47,47 +56,57 @@ const LayerToggleControls = ({
           display: "flex",
           justifyContent: "space-between",
           alignItems: "center",
-          padding: "1em",
-          borderBottom: isCollapsed ? "none" : "1px solid #eee",
+          padding: "0.75em 1em",
+          borderBottom: isCollapsed ? "none" : "1px solid #e0e0e0",
+          background: '#f1f3f6',
         }}
       >
-        <h3
+        <span
           style={{
             margin: 0,
-            fontSize: "16px",
-            color: "#333",
+            fontSize: "13px",
+            color: "#222",
             whiteSpace: "nowrap",
             overflow: "hidden",
             textOverflow: "ellipsis",
+            display: 'flex',
+            alignItems: 'center',
+            gap: 6,
+            fontWeight: 600,
+            letterSpacing: 0.1,
           }}
           title="Layer Visibility & Files"
         >
-          {isCollapsed ? "🗂️" : "🗂️ Layer Visibility & Files"}
-        </h3>
+          <LayersIcon fontSize="small" style={{marginRight: 4, color: '#1976d2'}}/>
+          Layer Visibility & Files
+        </span>
         <button
           onClick={onToggleCollapse}
           style={{
             background: "none",
             border: "none",
-            fontSize: "18px",
+            fontSize: "16px",
             cursor: "pointer",
-            padding: "4px",
+            padding: "2px",
             lineHeight: 1,
+            borderRadius: 0,
+            color: '#888',
           }}
+          aria-label={isCollapsed ? "Expand" : "Collapse"}
         >
-          {isCollapsed ? "📋" : "➖"}
+          {isCollapsed ? <ExpandMoreIcon fontSize="small" /> : <ExpandLessIcon fontSize="small" />}
         </button>
       </div>
 
       {!isCollapsed && (
         <div
           style={{
-            maxHeight: "300px",
+            flex: 1,
             overflowY: "auto",
-            border: "1px solid #e9ecef",
-            borderRadius: "6px",
-            background: "white",
-            margin: "1em",
+            background: "#f7f7f9",
+            margin: 0,
+            padding: '0.5em 0.5em 0.5em 0.5em',
+            border: 'none',
           }}
         >
           {uploadedFiles &&
@@ -96,39 +115,40 @@ const LayerToggleControls = ({
             Object.entries(uploadedFiles).map(([type, files]) => {
               const isLand = type === "landvpa";
               const isFood = type === "foodaccesspoints";
-
               const isVisible = isLand
                 ? showLandVPA
                 : isFood
                 ? showFoodAccess
                 : null;
-
               const expanded = expandedSections[type];
-
               return (
-                <div key={type} style={{ borderBottom: "1px solid #f1f3f4" }}>
+                <div key={type} style={{ borderBottom: "1px solid #ececec", marginBottom: 2 }}>
                   <div
                     style={{
-                      padding: "12px 16px",
-                      background: "#f8f9fa",
-                      fontWeight: "600",
-                      fontSize: "14px",
-                      color: "#495057",
-                      borderBottom: "1px solid #e9ecef",
+                      padding: "0.5em 0.5em 0.5em 0.5em",
+                      background: "#f9f9fb",
+                      fontWeight: 500,
+                      fontSize: "12px",
+                      color: "#333",
+                      borderBottom: "1px solid #e0e0e0",
                       display: "flex",
                       justifyContent: "space-between",
                       alignItems: "center",
                     }}
                   >
-                    <span>
+                    <span style={{display: 'flex', alignItems: 'center', gap: 4}}>
                       {isLand
-                        ? "🏘️ Land & Property Data"
+                        ? <LayersIcon fontSize="small" style={{color: '#1976d2'}} />
                         : isFood
-                        ? "🍎 Food Access Points"
-                        : `📄 ${type}`}
+                        ? <InsertDriveFileIcon fontSize="small" style={{color: '#e67e22'}} />
+                        : <InsertDriveFileIcon fontSize="small" style={{color: '#757575'}} />}
+                      {isLand
+                        ? "Land & Property Data"
+                        : isFood
+                        ? "Food Access Points"
+                        : type}
                     </span>
-
-                    <div style={{ display: "flex", gap: "0.5em" }}>
+                    <div style={{ display: "flex", gap: "0.25em" }}>
                       {(isLand || isFood) && (
                         <button
                           onClick={() => {
@@ -136,11 +156,11 @@ const LayerToggleControls = ({
                             if (isFood) setShowFoodAccess((prev) => !prev);
                           }}
                           style={{
-                            width: "32px",
-                            height: "32px",
-                            background: isVisible ? "#007bff" : "#6c757d",
+                            width: "24px",
+                            height: "24px",
+                            background: isVisible ? "#1976d2" : "#b0b0b0",
                             border: "none",
-                            borderRadius: "6px",
+                            borderRadius: 2,
                             cursor: "pointer",
                             display: "flex",
                             alignItems: "center",
@@ -148,67 +168,31 @@ const LayerToggleControls = ({
                             padding: 0
                           }}
                           title={isVisible ? "Hide Layer" : "Show Layer"}
+                          aria-label={isVisible ? "Hide Layer" : "Show Layer"}
                         >
-                          {isVisible ? (
-                            <svg
-                              xmlns="http://www.w3.org/2000/svg"
-                              width="20"
-                              height="20"
-                              viewBox="0 0 24 24"
-                              fill="none"
-                            >
-                              <path
-                                d="M15 12c0 1.66-1.34 3-3 3s-3-1.34-3-3 1.34-3 3-3 3 1.34 3 3Z"
-                                stroke="#fff"
-                                strokeWidth="2"
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                              />
-                              <path
-                                d="M12 5C7.52 5 3.73 7.94 2.46 12c1.27 4.06 5.06 7 9.54 7s8.27-2.94 9.54-7c-1.27-4.06-5.06-7-9.54-7Z"
-                                stroke="#fff"
-                                strokeWidth="2"
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                              />
-                            </svg>
-                          ) : (
-                            <svg
-                              xmlns="http://www.w3.org/2000/svg"
-                              width="20"
-                              height="20"
-                              viewBox="0 0 24 24"
-                              fill="none"
-                            >
-                              <path
-                                d="M3 3l18 18M9.84 9.91A2.99 2.99 0 0 0 9 12c0 1.66 1.34 3 3 3 .82 0 1.57-.33 2.11-.87M6.5 6.65C4.6 7.9 3.15 9.78 2.46 12c1.27 4.06 5.06 7 9.54 7 1.99 0 3.84-.58 5.4-1.58M11 5.05c.33-.03.67-.05 1-.05 4.48 0 8.27 2.94 9.54 7-.28.9-.68 1.76-1.19 2.5"
-                                stroke="#fff"
-                                strokeWidth="2"
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                              />
-                            </svg>
-                          )}
+                          {isVisible ? <VisibilityIcon style={{color: '#fff', fontSize: 16}} /> : <VisibilityOffIcon style={{color: '#fff', fontSize: 16}} />}
                         </button>
                       )}
                       <button
                         onClick={() => toggleSection(type)}
                         style={{
-                          width: "32px",
-                          height: "32px",
-                          background: "#dee2e6",
+                          width: "24px",
+                          height: "24px",
+                          background: "#e5e5e5",
                           border: "none",
-                          borderRadius: "6px",
+                          borderRadius: 2,
                           cursor: "pointer",
                           display: "flex",
                           alignItems: "center",
                           justifyContent: "center",
-                          fontSize: "16px",
+                          fontSize: "13px",
                           fontWeight: "bold",
+                          color: '#555',
                         }}
                         title={expanded ? "Collapse files" : "Expand files"}
+                        aria-label={expanded ? "Collapse files" : "Expand files"}
                       >
-                        {expanded ? "▲" : "▼"}
+                        {expanded ? <ExpandLessIcon fontSize="small" /> : <ExpandMoreIcon fontSize="small" />}
                       </button>
                     </div>
                   </div>
@@ -218,43 +202,46 @@ const LayerToggleControls = ({
                       <div
                         key={file.filename}
                         style={{
-                          padding: "12px 16px",
+                          padding: "0.5em 0.5em 0.5em 1.5em",
                           borderBottom: "1px solid #f1f3f4",
                           display: "flex",
                           justifyContent: "space-between",
                           alignItems: "center",
-                          fontSize: "14px",
+                          fontSize: "12px",
+                          background: '#fff',
                         }}
                       >
                         <div>
-                          <div style={{ fontWeight: "500", color: "#333" }}>
+                          <div style={{ fontWeight: 400, color: "#222", fontSize: '12px' }}>
                             {file.filename}
                           </div>
                           <div
                             style={{
-                              fontSize: "12px",
-                              color: "#6c757d",
+                              fontSize: "11px",
+                              color: "#888",
                               marginTop: "2px",
                             }}
                           >
-                            Uploaded:{" "}
-                            {new Date(file.upload_date).toLocaleString()}
+                            Uploaded: {new Date(file.upload_date).toLocaleString()}
                           </div>
                         </div>
                         <a
                           href={`${API_URL}/api/files/download/${file.filename}`}
                           download
                           style={{
-                            padding: "6px 12px",
-                            background: "#007bff",
+                            padding: "4px 8px",
+                            background: "#1976d2",
                             color: "white",
                             textDecoration: "none",
-                            borderRadius: "4px",
-                            fontSize: "12px",
-                            fontWeight: "500",
+                            borderRadius: 2,
+                            fontSize: "11px",
+                            fontWeight: 500,
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 3
                           }}
                         >
-                          ⬇️
+                          <DownloadIcon fontSize="small" style={{fontSize: 15}}/> Download
                         </a>
                       </div>
                     ))}
@@ -264,15 +251,15 @@ const LayerToggleControls = ({
           ) : (
             <div
               style={{
-                padding: "2em",
+                padding: "2em 0.5em",
                 textAlign: "center",
-                color: "#6c757d",
-                fontSize: "14px",
+                color: "#888",
+                fontSize: "12px",
               }}
             >
-              <div style={{ fontSize: "48px", marginBottom: "1em" }}>📭</div>
+              <InboxIcon style={{ fontSize: 32, marginBottom: "0.5em", color: '#bdbdbd' }} />
               <div>No files have been uploaded yet.</div>
-              <div style={{ fontSize: "12px", marginTop: "0.5em" }}>
+              <div style={{ fontSize: "11px", marginTop: "0.5em" }}>
                 Upload some GeoJSON files to see them here.
               </div>
             </div>
