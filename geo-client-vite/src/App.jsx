@@ -276,7 +276,7 @@ function App() {
             uploadFile={uploadFile}
             setUploadFile={setUploadFile}
             uploading={uploading}
-            handleUploadSubmit={handleUploadSubmit}
+            onSubmit={handleUploadSubmit}
             countyData={countyData}
             downloadOpen={downloadOpen}
             setDownloadOpen={setDownloadOpen}

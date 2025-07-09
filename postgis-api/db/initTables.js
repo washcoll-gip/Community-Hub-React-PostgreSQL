@@ -4,6 +4,13 @@ export const createTables = async () => {
   const createSQL = `
     CREATE EXTENSION IF NOT EXISTS postgis;
 
+    DROP TABLE IF EXISTS parcel CASCADE;
+    DROP TABLE IF EXISTS municipality CASCADE;
+    DROP TABLE IF EXISTS county CASCADE;
+    DROP TABLE IF EXISTS municipality_county CASCADE;
+    DROP TABLE IF EXISTS food_access_points;
+    DROP TABLE IF EXISTS uploaded_files;
+
     CREATE TABLE IF NOT EXISTS county (
       id SERIAL PRIMARY KEY,
       name TEXT UNIQUE,
