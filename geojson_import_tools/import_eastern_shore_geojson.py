@@ -13,15 +13,15 @@ load_dotenv()
 connection_url = os.getenv("NETFILY_DATABASE_URL")
 
 # To use a direct connection URL
-# conn = psycopg2.connect(connection_url)
+conn = psycopg2.connect(connection_url)
 # To use a local PostgreSQL database
-conn = psycopg2.connect(
-    dbname=os.getenv("DB_NAME"),
-    user=os.getenv("DB_USER"),
-    password=os.getenv("DB_PASSWORD"),
-    host=os.getenv("DB_HOST"),
-    port=os.getenv("DB_PORT")
-)
+# conn = psycopg2.connect(
+#     dbname=os.getenv("DB_NAME"),
+#     user=os.getenv("DB_USER"),
+#     password=os.getenv("DB_PASSWORD"),
+#     host=os.getenv("DB_HOST"),
+#     port=os.getenv("DB_PORT")
+# )
 cur = conn.cursor()
 
 with open(filepath, "r") as f:

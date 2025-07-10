@@ -279,7 +279,6 @@ export const createTables = async () => {
 
   try {
     await pool.query(createSQL);
-    console.log("Tables created successfully.");
   } catch (err) {
     console.error("Error creating tables:", err);
   }

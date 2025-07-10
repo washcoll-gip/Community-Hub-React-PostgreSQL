@@ -10,8 +10,6 @@ import foodAccessRoutes from "./routes/foodAccess.js";
 import filesRoutes from "./routes/files.js";
 import exportRoutes from "./routes/export.js";
 
-import { createTables } from "./db/initTables.js";
-
 dotenv.config();
 
 const app = express();
@@ -36,7 +34,5 @@ app.use("/api/municipalities", municipalitiesRoutes);
 app.use("/api/foodaccesspoints", foodAccessRoutes);
 app.use("/api/files", filesRoutes);
 app.use("/api/export", exportRoutes);
-
-createTables();
 
 export default app;
