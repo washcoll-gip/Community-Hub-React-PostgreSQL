@@ -1,34 +1,22 @@
-import path from "path";
-import fs from "fs";
 import pool from "../db/pool.js";
-import { moveFileSync, cleanProperties } from "../utils/fileHelpers.js";
-
-const __dirname = path.resolve();
+import { cleanProperties } from "../utils/fileHelpers.js";
 
 export const uploadFoodAccessPoints = async (req, res) => {
   if (!req.file) return res.status(400).json({ error: "File is required" });
 
   try {
     const originalName = req.file.originalname;
-    const tempPath = req.file.path;
+    const fileBuffer = req.file.buffer;
+    const geojson = JSON.parse(fileBuffer.toString());
 
-    const targetDir = path.join(__dirname, "uploads", "food-access-points");
-    if (!fs.existsSync(targetDir)) fs.mkdirSync(targetDir, { recursive: true });
-
-    const targetPath = path.join(targetDir, originalName);
-    moveFileSync(tempPath, targetPath);
+    if (!geojson.features || !Array.isArray(geojson.features)) {
+      return res.status(400).json({ error: "Invalid GeoJSON: missing or invalid features array" });
+    }
 
     await pool.query(
       `INSERT INTO uploaded_files (filename, upload_type) VALUES ($1, 'foodaccesspoints')`,
       [originalName]
     );
-
-    const raw = fs.readFileSync(targetPath);
-    const geojson = JSON.parse(raw);
-
-    if (!geojson.features || !Array.isArray(geojson.features)) {
-      return res.status(400).json({ error: "Invalid GeoJSON: missing or invalid features array" });
-    }
 
     for (const feature of geojson.features) {
       if (!feature.geometry || !feature.properties) continue;
@@ -80,27 +68,18 @@ export const uploadLandVPA = async (req, res) => {
     if (!municipalityRaw) return res.status(400).json({ error: "Municipality is required" });
 
     const municipalityName = municipalityRaw.trim().toUpperCase().replace(/ /g, "_");
-
-    const tempPath = req.file.path;
-    const targetDir = path.join(__dirname, "uploads", "landvpa");
-    if (!fs.existsSync(targetDir)) fs.mkdirSync(targetDir, { recursive: true });
-
     const targetFileName = `${municipalityName}_VPA.geojson`;
-    const targetPath = path.join(targetDir, targetFileName);
+    const fileBuffer = req.file.buffer;
+    const geojson = JSON.parse(fileBuffer.toString());
 
-    moveFileSync(tempPath, targetPath);
+    if (!geojson.features || !Array.isArray(geojson.features)) {
+      return res.status(400).json({ error: "Invalid GeoJSON: missing or invalid features array" });
+    }
 
     await pool.query(
       `INSERT INTO uploaded_files (filename, upload_type) VALUES ($1, 'landvpa')`,
       [targetFileName]
     );
-
-    const raw = fs.readFileSync(targetPath);
-    const geojson = JSON.parse(raw);
-
-    if (!geojson.features || !Array.isArray(geojson.features)) {
-      return res.status(400).json({ error: "Invalid GeoJSON: missing or invalid features array" });
-    }
 
     const muniResult = await pool.query(
       "SELECT id FROM municipality WHERE LOWER(name) = LOWER($1)",
@@ -119,10 +98,7 @@ export const uploadLandVPA = async (req, res) => {
     }
 
     for (const feature of geojson.features) {
-      if (!feature.geometry || !feature.properties) {
-        console.warn("Skipping invalid feature:", feature);
-        continue;
-      }
+      if (!feature.geometry || !feature.properties) continue;
 
       const geom = JSON.stringify(feature.geometry);
       const props = feature.properties;

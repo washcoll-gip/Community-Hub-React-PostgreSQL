@@ -1,76 +1,107 @@
-import fs from "fs";
 import archiver from "archiver";
 import pool from "../db/pool.js";
-import path from "path";
-import { fileURLToPath } from "url";
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-const UPLOADS_DIR = path.join(__dirname, "..", "uploads");
-const LANDVPA_DIR = path.join(UPLOADS_DIR, "landvpa");
 
 export const exportData = async (req, res) => {
   const { county, municipality } = req.query;
-  let filesToDownload = [];
 
   try {
+    let queries = [];
+
     if (!county && !municipality) {
-      if (fs.existsSync(LANDVPA_DIR)) {
-        filesToDownload = fs.readdirSync(LANDVPA_DIR).map(f => ({
-          path: path.join(LANDVPA_DIR, f),
-          name: f,
-        }));
-      }
-      if (filesToDownload.length === 0) {
-        return res.status(404).json({ error: "No landvpa data available for download." });
-      }
-    } 
-    else if (county && !municipality) {
-      const { rows } = await pool.query(
-        `SELECT m.name FROM municipality m
-         JOIN municipality_county mc ON m.id = mc.municipality_id
-         JOIN county c ON mc.county_id = c.id
-         WHERE c.name = $1`, 
-         [county]
-      );
+      const { rows } = await pool.query(`
+        SELECT name, id FROM municipality
+      `);
+      queries = rows.map(r => ({
+        filename: `${r.name.toUpperCase().replace(/ /g, "_")}_VPA.geojson`,
+        query: `
+          SELECT row_to_json(fc)
+          FROM (
+            SELECT 
+              'FeatureCollection' AS type,
+              array_to_json(array_agg(f)) AS features
+            FROM (
+              SELECT 
+                'Feature' AS type,
+                ST_AsGeoJSON(geom)::json AS geometry,
+                to_jsonb(t) - 'geom' AS properties
+              FROM (
+                SELECT * FROM parcel WHERE municipality_id = $1
+              ) AS t
+            ) AS f
+          ) AS fc
+        `,
+        params: [r.id]
+      }));
+    } else if (county && !municipality) {
+      const { rows } = await pool.query(`
+        SELECT m.id, m.name
+        FROM municipality m
+        JOIN municipality_county mc ON m.id = mc.municipality_id
+        JOIN county c ON mc.county_id = c.id
+        WHERE c.name = $1
+      `, [county]);
 
       if (rows.length === 0) {
         return res.status(404).json({ error: `No municipalities found for county ${county}.` });
       }
 
-      const municipalityNames = rows.map(r =>
-        r.name.toUpperCase().replace(/ /g, "_")
+      queries = rows.map(r => ({
+        filename: `${r.name.toUpperCase().replace(/ /g, "_")}_VPA.geojson`,
+        query: `
+          SELECT row_to_json(fc)
+          FROM (
+            SELECT 
+              'FeatureCollection' AS type,
+              array_to_json(array_agg(f)) AS features
+            FROM (
+              SELECT 
+                'Feature' AS type,
+                ST_AsGeoJSON(geom)::json AS geometry,
+                to_jsonb(t) - 'geom' AS properties
+              FROM (
+                SELECT * FROM parcel WHERE municipality_id = $1
+              ) AS t
+            ) AS f
+          ) AS fc
+        `,
+        params: [r.id]
+      }));
+    } else if (municipality) {
+      const { rows } = await pool.query(
+        "SELECT id FROM municipality WHERE LOWER(name) = LOWER($1)",
+        [municipality]
       );
 
-      if (fs.existsSync(LANDVPA_DIR)) {
-        const allFiles = fs.readdirSync(LANDVPA_DIR);
-        filesToDownload = allFiles
-          .filter(filename => {
-            return municipalityNames.some(mun => filename.includes(mun + "_VPA"));
-          })
-          .map(f => ({
-            path: path.join(LANDVPA_DIR, f),
-            name: f,
-          }));
+      if (rows.length === 0) {
+        return res.status(404).json({ error: `Municipality ${municipality} not found.` });
       }
 
-      if (filesToDownload.length === 0) {
-        return res.status(404).json({ error: `No landvpa files found for county ${county}.` });
-      }
-    } 
-    else if (municipality) {
-      const munNormalized = municipality.toUpperCase().replace(/ /g, "_");
-      const filename = `${munNormalized}_VPA.geojson`;
-      const filepath = path.join(LANDVPA_DIR, filename);
+      const id = rows[0].id;
+      queries.push({
+        filename: `${municipality.toUpperCase().replace(/ /g, "_")}_VPA.geojson`,
+        query: `
+          SELECT row_to_json(fc)
+          FROM (
+            SELECT 
+              'FeatureCollection' AS type,
+              array_to_json(array_agg(f)) AS features
+            FROM (
+              SELECT 
+                'Feature' AS type,
+                ST_AsGeoJSON(geom)::json AS geometry,
+                to_jsonb(t) - 'geom' AS properties
+              FROM (
+                SELECT * FROM parcel WHERE municipality_id = $1
+              ) AS t
+            ) AS f
+          ) AS fc
+        `,
+        params: [id]
+      });
+    }
 
-      if (fs.existsSync(filepath)) {
-        filesToDownload.push({ path: filepath, name: filename });
-      }
-
-      if (filesToDownload.length === 0) {
-        return res.status(404).json({ error: `No landvpa data available for municipality ${municipality}.` });
-      }
+    if (queries.length === 0) {
+      return res.status(404).json({ error: "No data available for export." });
     }
 
     res.setHeader("Content-Type", "application/zip");
@@ -79,34 +110,78 @@ export const exportData = async (req, res) => {
     const archive = archiver("zip", { zlib: { level: 9 } });
     archive.pipe(res);
 
-    filesToDownload.forEach(file => {
-      archive.file(file.path, { name: file.name });
-    });
+    for (const q of queries) {
+      const { rows } = await pool.query(q.query, q.params);
+      const geojson = rows[0]?.row_to_json;
+      if (geojson) {
+        archive.append(JSON.stringify(geojson, null, 2), { name: q.filename });
+      }
+    }
 
     archive.finalize();
-
-  } catch (error) {
-    console.error(error);
+  } catch (err) {
+    console.error("Error generating dynamic export:", err);
     res.status(500).json({ error: "Internal server error" });
   }
 };
 
 export const exportFullData = async (req, res) => {
-  const foodDir = path.join(UPLOADS_DIR, "food-access-points");
-
   try {
-    const filesToDownload = [];
+    const filesToExport = [];
 
-    if (fs.existsSync(LANDVPA_DIR)) {
-      const landFiles = fs.readdirSync(LANDVPA_DIR);
-      landFiles.forEach(f => filesToDownload.push({ path: path.join(LANDVPA_DIR, f), name: `landvpa/${f}` }));
-    }
-    if (fs.existsSync(foodDir)) {
-      const foodFiles = fs.readdirSync(foodDir);
-      foodFiles.forEach(f => filesToDownload.push({ path: path.join(foodDir, f), name: `food-access-points/${f}` }));
+    const muniResult = await pool.query(`SELECT id, name FROM municipality`);
+    for (const row of muniResult.rows) {
+      const { id, name } = row;
+      const { rows } = await pool.query(`
+        SELECT row_to_json(fc)
+        FROM (
+          SELECT 
+            'FeatureCollection' AS type,
+            array_to_json(array_agg(f)) AS features
+          FROM (
+            SELECT 
+              'Feature' AS type,
+              ST_AsGeoJSON(geom)::json AS geometry,
+              to_jsonb(t) - 'geom' AS properties
+            FROM (
+              SELECT * FROM parcel WHERE municipality_id = $1
+            ) AS t
+          ) AS f
+        ) AS fc
+      `, [id]);
+
+      if (rows[0]?.row_to_json) {
+        const filename = `landvpa/${name.toUpperCase().replace(/ /g, "_")}_VPA.geojson`;
+        filesToExport.push({ name: filename, content: JSON.stringify(rows[0].row_to_json, null, 2) });
+      }
     }
 
-    if (filesToDownload.length === 0) {
+    const foodResult = await pool.query(`
+      SELECT row_to_json(fc)
+      FROM (
+        SELECT 
+          'FeatureCollection' AS type,
+          array_to_json(array_agg(f)) AS features
+        FROM (
+          SELECT 
+            'Feature' AS type,
+            ST_AsGeoJSON(geometry)::json AS geometry,
+            to_jsonb(t) - 'geometry' AS properties
+          FROM (
+            SELECT * FROM food_access_points
+          ) AS t
+        ) AS f
+      ) AS fc
+    `);
+
+    if (foodResult.rows[0]?.row_to_json) {
+      filesToExport.push({
+        name: "food-access-points/food_access_points.geojson",
+        content: JSON.stringify(foodResult.rows[0].row_to_json, null, 2)
+      });
+    }
+
+    if (filesToExport.length === 0) {
       return res.status(404).json({ error: "No data available for full export." });
     }
 
@@ -116,14 +191,13 @@ export const exportFullData = async (req, res) => {
     const archive = archiver("zip", { zlib: { level: 9 } });
     archive.pipe(res);
 
-    filesToDownload.forEach(file => {
-      archive.file(file.path, { name: file.name });
+    filesToExport.forEach(file => {
+      archive.append(file.content, { name: file.name });
     });
 
     archive.finalize();
-
-  } catch (error) {
-    console.error(error);
+  } catch (err) {
+    console.error("Error exporting full data:", err);
     res.status(500).json({ error: "Internal server error exporting full data." });
   }
 };
