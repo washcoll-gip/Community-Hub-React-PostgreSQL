@@ -19,16 +19,17 @@ const RectangleDrawControl = ({ onRectangleDrawn, active, onCancel }) => {
 
     let drawnLayer = null;
     let drawControl = null;
+    let rectangleDrawer = null;
 
     // Add draw control only once
-    if (!map._drawControlAddedRect) {
+    if (!map._drawControlAddedPoly) {
       drawControl = new L.Control.Draw({
         draw: {
-          rectangle: {
+          polygon: {
             shapeOptions: { color: '#1976d2', weight: 2 },
             repeatMode: false,
           },
-          polygon: false,
+          rectangle: false,
           polyline: false,
           circle: false,
           marker: false,
@@ -37,15 +38,15 @@ const RectangleDrawControl = ({ onRectangleDrawn, active, onCancel }) => {
         edit: false,
       });
       map.addControl(drawControl);
-      map._drawControlAddedRect = true;
+      map._drawControlAddedPoly = true;
     }
 
-    // Listen for rectangle creation
+    // Listen for polygon creation
     const handleCreated = (e) => {
       if (drawnLayer) {
         map.removeLayer(drawnLayer);
       }
-      if (e.layerType === 'rectangle') {
+      if (e.layerType === 'polygon') {
         drawnLayer = e.layer;
         map.addLayer(drawnLayer);
         if (onRectangleDrawn) {
@@ -60,11 +61,20 @@ const RectangleDrawControl = ({ onRectangleDrawn, active, onCancel }) => {
       map._container.style.pointerEvents = 'auto';
     }
 
+    // Automatically activate polygon draw tool when active becomes true
+    if (active) {
+      const polygonDrawer = new L.Draw.Polygon(map, {
+        shapeOptions: { color: '#1976d2', weight: 2 },
+        repeatMode: false,
+      });
+      polygonDrawer.enable();
+    }
+
     return () => {
       map.off(L.Draw.Event.CREATED, handleCreated);
       if (drawnLayer) map.removeLayer(drawnLayer);
     };
-  }, [map, onRectangleDrawn]);
+  }, [map, active, onRectangleDrawn]);
 
   useEffect(() => {
     if (!active && onCancel) {

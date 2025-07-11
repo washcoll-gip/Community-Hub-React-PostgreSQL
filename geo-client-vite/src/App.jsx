@@ -1,15 +1,11 @@
 import { useEffect, useState, useCallback } from "react";
 import "leaflet/dist/leaflet.css";
-import React from "react";
 import { ThemeProvider, CssBaseline, IconButton, Box } from "@mui/material";
 import theme from "./theme";
-import MapIcon from '@mui/icons-material/Map';
-import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 
 // Components
 import MapView from "./components/MapView.jsx";
-import SidebarControls from "./components/SidebarControls.jsx";
 import RightSidebar from "./components/RightSidebar.jsx";
 import NotificationSystem from "./components/NotificationSystem.jsx";
 import LeftSidebar from "./components/LeftSidebar.jsx";
