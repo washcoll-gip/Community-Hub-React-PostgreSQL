@@ -1,8 +1,11 @@
 import { useEffect, useState, useCallback } from "react";
 import "leaflet/dist/leaflet.css";
 import React from "react";
-import { ThemeProvider, CssBaseline } from "@mui/material";
+import { ThemeProvider, CssBaseline, IconButton, Box } from "@mui/material";
 import theme from "./theme";
+import MapIcon from '@mui/icons-material/Map';
+import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
+import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 
 // Components
 import MapView from "./components/MapView.jsx";
@@ -10,6 +13,7 @@ import SidebarControls from "./components/SidebarControls.jsx";
 import RightSidebar from "./components/RightSidebar.jsx";
 import NotificationSystem from "./components/NotificationSystem.jsx";
 import LeftSidebar from "./components/LeftSidebar.jsx";
+import BasemapSwitcher, { BASEMAPS } from "./components/BasemapSwitcher.jsx";
 
 // Hooks
 import { useNotifications, useApiRequest } from "./hooks";
@@ -67,6 +71,13 @@ function App() {
   // Polygon drawing state
   const [isDrawingPolygon, setIsDrawingPolygon] = useState(false);
   const [drawnPolygon, setDrawnPolygon] = useState(null);
+
+  // Basemap state
+  const [basemap, setBasemap] = useState(BASEMAPS[0].key);
+  const selectedBasemap = BASEMAPS.find(b => b.key === basemap);
+
+  // Sidebar collapse state
+  const [rightSidebarCollapsed, setRightSidebarCollapsed] = useState(false);
 
   // Handler to start drawing
   const handleDrawPolygon = () => setIsDrawingPolygon(true);
@@ -222,6 +233,11 @@ function App() {
     <ThemeProvider theme={theme}>
       <CssBaseline />
       <div style={{ height: "100vh", position: "relative", fontFamily: "system-ui, -apple-system, sans-serif" }}>
+        {/* Basemap Switcher - left of right sidebar */}
+        <div style={{ position: 'absolute', top: 72, right: rightSidebarCollapsed ? 24 : 404, zIndex: 3000 }}>
+          <BasemapSwitcher basemap={basemap} setBasemap={setBasemap} minimal />
+        </div>
+
         {/* Minimalistic Header with Login */}
         <div style={{
           position: 'absolute', top: 0, left: 0, right: 0, height: 44, background: '#f1f3f6', borderBottom: '1px solid #e0e0e0', display: 'flex', alignItems: 'center', justifyContent: 'space-between', zIndex: 1201, padding: '0 1.5em', fontSize: 15, fontWeight: 600, color: '#222', letterSpacing: 0.2
@@ -261,30 +277,67 @@ function App() {
           />
         </div>
 
-        {/* Upload Modal (always on top) */}
-        <div style={{ pointerEvents: 'auto' }}>
-          <RightSidebar
-            API_URL={API_URL}
-            modalOpen={modalOpen}
-            handleUploadModalClose={handleUploadModalClose}
-            uploadType={uploadType}
-            setUploadType={setUploadType}
-            uploadCounty={uploadCounty}
-            setUploadCounty={setUploadCounty}
-            uploadMunicipality={uploadMunicipality}
-            setUploadMunicipality={setUploadMunicipality}
-            uploadFile={uploadFile}
-            setUploadFile={setUploadFile}
-            uploading={uploading}
-            onSubmit={handleUploadSubmit}
-            countyData={countyData}
-            downloadOpen={downloadOpen}
-            setDownloadOpen={setDownloadOpen}
-            uploadedFiles={uploadedFiles}
-            selectedCounty={selectedCounty}
-            selectedMunicipality={selectedMunicipality}
-          />
-        </div>
+        {/* Right Sidebar */}
+        {!rightSidebarCollapsed && (
+          <div style={{ pointerEvents: 'auto' }}>
+            <RightSidebar
+              API_URL={API_URL}
+              modalOpen={modalOpen}
+              handleUploadModalClose={handleUploadModalClose}
+              uploadType={uploadType}
+              setUploadType={setUploadType}
+              uploadCounty={uploadCounty}
+              setUploadCounty={setUploadCounty}
+              uploadMunicipality={uploadMunicipality}
+              setUploadMunicipality={setUploadMunicipality}
+              uploadFile={uploadFile}
+              setUploadFile={setUploadFile}
+              uploading={uploading}
+              onSubmit={handleUploadSubmit}
+              countyData={countyData}
+              downloadOpen={downloadOpen}
+              setDownloadOpen={setDownloadOpen}
+              uploadedFiles={uploadedFiles}
+              selectedCounty={selectedCounty}
+              selectedMunicipality={selectedMunicipality}
+              rightSidebarCollapsed={rightSidebarCollapsed}
+              setRightSidebarCollapsed={setRightSidebarCollapsed}
+            />
+          </div>
+        )}
+        {/* Expand handle when sidebar is collapsed */}
+        {rightSidebarCollapsed && (
+          <Box
+            sx={{
+              position: 'absolute',
+              top: 0,
+              right: 0,
+              height: '100vh',
+              width: 12,
+              bgcolor: 'transparent',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              cursor: 'pointer',
+              zIndex: 1300,
+            }}
+            onClick={() => setRightSidebarCollapsed(false)}
+            aria-label="Expand sidebar"
+          >
+            <Box sx={{
+              width: 4,
+              height: 32,
+              bgcolor: '#d1d5db',
+              borderRadius: 2,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              position: 'relative',
+            }}>
+              <ChevronRightIcon fontSize="small" sx={{ position: 'absolute', right: 6, top: '50%', transform: 'translateY(-50%)', color: '#1976d2' }} />
+            </Box>
+          </Box>
+        )}
 
         {/* Map View */}
         <div style={{ position: 'absolute', inset: 0, zIndex: 0 }}>
@@ -299,6 +352,8 @@ function App() {
             onPolygonDrawn={handlePolygonDrawn}
             onDrawCancel={handleDrawCancel}
             drawnPolygon={drawnPolygon}
+            basemap={basemap}
+            selectedBasemap={selectedBasemap}
           />
         </div>
 

@@ -6,6 +6,8 @@ import CloseIcon from '@mui/icons-material/Close';
 import FolderIcon from '@mui/icons-material/Folder';
 import PublicIcon from '@mui/icons-material/Public';
 import LocationCityIcon from '@mui/icons-material/LocationCity';
+import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
+import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 
 /**
  * Inline panel versions of Upload and Download sections
@@ -285,6 +287,7 @@ const DownloadPanel = ({
  * Props are passed through to the respective panels.
  */
 const RightSidebar = (props) => {
+  const { rightSidebarCollapsed, setRightSidebarCollapsed } = props;
   return (
     <Paper
       elevation={3}
@@ -308,7 +311,38 @@ const RightSidebar = (props) => {
         color: '#222',
       }}
     >
-      <Box sx={{ p: 2, borderBottom: "1px solid #e0e0e0", bgcolor: "#f1f3f6" }}>
+      {/* Collapse handle as a vertical line */}
+      <Box
+        sx={{
+          position: 'absolute',
+          left: -12,
+          top: 0,
+          height: '100%',
+          width: 12,
+          bgcolor: 'transparent',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          cursor: 'pointer',
+          zIndex: 1300,
+        }}
+        onClick={() => setRightSidebarCollapsed(true)}
+        aria-label="Collapse sidebar"
+      >
+        <Box sx={{
+          width: 4,
+          height: 32,
+          bgcolor: '#d1d5db',
+          borderRadius: 2,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          position: 'relative',
+        }}>
+          <ChevronLeftIcon fontSize="small" sx={{ position: 'absolute', left: 6, top: '50%', transform: 'translateY(-50%)', color: '#1976d2' }} />
+        </Box>
+      </Box>
+      <Box sx={{ display: 'flex', alignItems: 'center', p: 1, borderBottom: "1px solid #e0e0e0", bgcolor: "#f1f3f6" }}>
         <Typography variant="h6" sx={{ fontWeight: 700, fontSize: '15px', color: '#222' }}>
           Data Management
         </Typography>
