@@ -65,7 +65,8 @@ export const uploadLandVPA = async (req, res) => {
 
   try {
     const municipalityRaw = req.body.municipality;
-    if (!municipalityRaw) return res.status(400).json({ error: "Municipality is required" });
+    if (!municipalityRaw)
+      return res.status(400).json({ error: "Municipality is required" });
 
     const municipalityName = municipalityRaw.trim().toUpperCase().replace(/ /g, "_");
     const targetFileName = `${municipalityName}_VPA.geojson`;
@@ -131,41 +132,66 @@ export const uploadLandVPA = async (req, res) => {
       );
     }
 
+    const topVpaQuery = `
+      SELECT DISTINCT vpa FROM parcel
+      WHERE municipality_id = $1 AND vpa > 0
+      ORDER BY vpa ASC
+    `;
+    const vpaRows = (await pool.query(topVpaQuery, [municipalityId])).rows.map(r => Number(r.vpa));
+
+    const total = vpaRows.length;
+    if (total === 0) {
+      return res.status(200).json({ message: `No VPA data > 0 for ${municipalityRaw}` });
+    }
+
+    const thresholds = [];
+    let cumulative = 0;
+    for (let i = 1; i <= 10; i++) {
+      cumulative += 11 - i; // 10 + 9 + 8 + ...
+    }
+
+    let runningTotal = 0;
+    const decileBreakpoints = [];
+    for (let i = 1; i <= 10; i++) {
+      runningTotal += 11 - i;
+      const index = Math.floor((runningTotal / cumulative) * total) - 1;
+      const rawValue = i === 10
+        ? vpaRows[vpaRows.length - 1]
+        : vpaRows[Math.max(0, Math.min(index, total - 1))];
+      const rounded = Math.ceil(rawValue / 100) * 100;
+      decileBreakpoints.push(rounded);
+    }
+
+    const updateFields = decileBreakpoints
+      .map((val, i) => `vpa_max_decile_${i + 1} = ${val}`)
+      .join(", ");
+
     await pool.query(
-      `UPDATE parcel
-       SET vpa_decile = 0
-       WHERE municipality_id = $1 AND vpa = 0`,
+      `UPDATE municipality SET ${updateFields} WHERE id = $1`,
       [municipalityId]
     );
 
+    const updateDecileQuery = `
+      UPDATE parcel
+      SET vpa_decile = CASE
+        ${decileBreakpoints.map((v, i) => {
+          const lowerBound = i === 0 ? 0 : decileBreakpoints[i - 1];
+          return `WHEN vpa > ${lowerBound} AND vpa <= ${v} THEN ${i + 1}`;
+        }).join("\n        ")}
+        ELSE 0
+      END
+      WHERE municipality_id = $1 AND vpa > 0
+    `;
+
+    await pool.query(updateDecileQuery, [municipalityId]);
+
     await pool.query(
-      `WITH ranked AS (
-         SELECT id, ROW_NUMBER() OVER (ORDER BY vpa) AS rn, COUNT(*) OVER () AS total
-         FROM parcel
-         WHERE municipality_id = $1 AND vpa > 0
-       ),
-       deciles AS (
-         SELECT id,
-         CASE
-           WHEN rn <= total * 10.0 / 55 THEN 1
-           WHEN rn <= total * (10.0 + 9) / 55 THEN 2
-           WHEN rn <= total * (10.0 + 9 + 8) / 55 THEN 3
-           WHEN rn <= total * (10.0 + 9 + 8 + 7) / 55 THEN 4
-           WHEN rn <= total * (10.0 + 9 + 8 + 7 + 6) / 55 THEN 5
-           WHEN rn <= total * (10.0 + 9 + 8 + 7 + 6 + 5) / 55 THEN 6
-           WHEN rn <= total * (10.0 + 9 + 8 + 7 + 6 + 5 + 4) / 55 THEN 7
-           WHEN rn <= total * (10.0 + 9 + 8 + 7 + 6 + 5 + 4 + 3) / 55 THEN 8
-           WHEN rn <= total * (10.0 + 9 + 8 + 7 + 6 + 5 + 4 + 3 + 2) / 55 THEN 9
-           ELSE 10
-         END AS vpa_decile
-         FROM ranked
-       )
-       UPDATE parcel p SET vpa_decile = d.vpa_decile
-       FROM deciles d WHERE p.id = d.id;`,
+      `UPDATE parcel SET vpa_decile = 0 WHERE municipality_id = $1 AND vpa = 0`,
       [municipalityId]
     );
 
-    res.status(200).json({ message: `LandVPA for ${municipalityRaw} uploaded and inserted successfully` });
+    res.status(200).json({ message: `LandVPA for ${municipalityRaw} uploaded and processed successfully` });
+
   } catch (err) {
     console.error("Upload landvpa error:", err);
     res.status(500).json({ error: "Upload landvpa failed" });

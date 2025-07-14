@@ -107,7 +107,7 @@ const UploadPanel = ({
               >
                 <MenuItem value="">Choose Municipality</MenuItem>
                 {municipalitiesLocal.map(m => (
-                  <MenuItem key={m} value={m}>{m}</MenuItem>
+                  <MenuItem key={m} value={m.name}>{m.name}</MenuItem>
                 ))}
               </Select>
             </FormControl>

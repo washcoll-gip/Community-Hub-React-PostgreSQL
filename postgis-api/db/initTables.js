@@ -19,7 +19,17 @@ export const createTables = async () => {
 
     CREATE TABLE IF NOT EXISTS municipality (
       id SERIAL PRIMARY KEY,
-      name TEXT UNIQUE NOT NULL
+      name TEXT UNIQUE NOT NULL,
+      vpa_max_decile_1 INTEGER,
+      vpa_max_decile_2 INTEGER,
+      vpa_max_decile_3 INTEGER,
+      vpa_max_decile_4 INTEGER,
+      vpa_max_decile_5 INTEGER,
+      vpa_max_decile_6 INTEGER,
+      vpa_max_decile_7 INTEGER,
+      vpa_max_decile_8 INTEGER,
+      vpa_max_decile_9 INTEGER,
+      vpa_max_decile_10 INTEGER
     );
 
     CREATE TABLE IF NOT EXISTS municipality_county (

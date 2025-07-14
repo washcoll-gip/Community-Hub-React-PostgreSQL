@@ -79,7 +79,7 @@ const LeftSidebar = (props) => {
           >
             <MenuItem value="">All Municipalities</MenuItem>
             {municipalities && municipalities.map(m => (
-              <MenuItem key={m} value={m}>{m}</MenuItem>
+              <MenuItem key={m.id} value={m.name}>{m.name}</MenuItem>
             ))}
           </Select>
         </FormControl>

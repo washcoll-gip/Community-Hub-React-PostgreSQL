@@ -9,6 +9,7 @@ import MapView from "./components/MapView.jsx";
 import RightSidebar from "./components/RightSidebar.jsx";
 import NotificationSystem from "./components/NotificationSystem.jsx";
 import LeftSidebar from "./components/LeftSidebar.jsx";
+import Legend from "./components/Leyend.jsx";
 import BasemapSwitcher, { BASEMAPS } from "./components/BasemapSwitcher.jsx";
 
 // Hooks
@@ -272,6 +273,15 @@ function App() {
             onToggleCollapse={() => setControlsCollapsed(!controlsCollapsed)}
           />
         </div>
+
+        {/* Legend - only show when a municipality is selected */}
+        {showLandVPA && selectedMunicipality && (
+          <Legend
+            municipalities={municipalities}
+            selectedMunicipality={selectedMunicipality}
+            getColorByDecile={getColorByDecile}
+          />
+        )}
 
         {/* Right Sidebar */}
         {!rightSidebarCollapsed && (

@@ -7,7 +7,7 @@ export const getMunicipalities = async (req, res) => {
     let result;
     if (county) {
       result = await pool.query(`
-        SELECT m.name
+        SELECT m.*
         FROM municipality m
         JOIN municipality_county mc ON m.id = mc.municipality_id
         JOIN county c ON mc.county_id = c.id
@@ -15,10 +15,10 @@ export const getMunicipalities = async (req, res) => {
         ORDER BY m.id
       `, [county]);
     } else {
-      result = await pool.query("SELECT name FROM municipality ORDER BY name");
+      result = await pool.query("SELECT * FROM municipality ORDER BY name");
     }
 
-    res.json(result.rows.map(row => row.name));
+    res.json(result.rows);
   } catch (err) {
     console.error("Error fetching municipalities:", err);
     res.status(500).json({ error: "Internal server error" });
