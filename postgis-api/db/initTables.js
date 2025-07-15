@@ -19,17 +19,24 @@ export const createTables = async () => {
 
     CREATE TABLE IF NOT EXISTS municipality (
       id SERIAL PRIMARY KEY,
-      name TEXT UNIQUE NOT NULL,
-      vpa_max_decile_1 INTEGER,
-      vpa_max_decile_2 INTEGER,
-      vpa_max_decile_3 INTEGER,
-      vpa_max_decile_4 INTEGER,
-      vpa_max_decile_5 INTEGER,
-      vpa_max_decile_6 INTEGER,
-      vpa_max_decile_7 INTEGER,
-      vpa_max_decile_8 INTEGER,
-      vpa_max_decile_9 INTEGER,
-      vpa_max_decile_10 INTEGER
+      name TEXT UNIQUE NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS vpa_decile_breakpoints (
+      id SERIAL PRIMARY KEY,
+      municipality_id INTEGER REFERENCES municipality(id) ON DELETE CASCADE,
+      decile INTEGER NOT NULL CHECK (decile BETWEEN 1 AND 10),
+      max_vpa INTEGER NOT NULL,
+      UNIQUE (municipality_id, decile)
+    );
+
+    CREATE TABLE IF NOT EXISTS vpa_subdecile_breakpoints (
+      id SERIAL PRIMARY KEY,
+      municipality_id INTEGER REFERENCES municipality(id) ON DELETE CASCADE,
+      decile INTEGER NOT NULL CHECK (decile BETWEEN 1 AND 3),
+      subdecile INTEGER NOT NULL CHECK (subdecile BETWEEN 1 AND 10),
+      max_vpa INTEGER NOT NULL,
+      UNIQUE (municipality_id, decile, subdecile)
     );
 
     CREATE TABLE IF NOT EXISTS municipality_county (
@@ -79,7 +86,8 @@ export const createTables = async () => {
         dt_easton TEXT,
         developed TEXT,
         geom GEOMETRY(MultiPolygon, 4326),
-        vpa_decile INTEGER
+        vpa_decile INTEGER,
+        vpa_subdecile INTEGER
     );
 
     CREATE TABLE IF NOT EXISTS food_access_points ( 

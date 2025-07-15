@@ -111,7 +111,7 @@ export const uploadLandVPA = async (req, res) => {
           landuseu3, lu, desclu, descstyl, descbldg, nfmlndvl, nfmimpvl, nfmttlvl,
           bldg_story, resident, merge_, new_merge, notes, downtown, fid1, cityname,
           insidecore, outsidecore, yearbuiltcat, impvalperacre, dt_easton, developed, geom,
-          vpa_decile
+          vpa_decile, vpa_subdecile
         ) VALUES (
           $1, $2, $3, $4, $5, $6, $7, $8,
           $9, $10, $11, $12, $13, $14, $15, $16,
@@ -119,7 +119,7 @@ export const uploadLandVPA = async (req, res) => {
           $25, $26, $27, $28, $29, $30, $31, $32,
           $33, $34, $35, $36, $37, $38,
           ST_SetSRID(ST_GeomFromGeoJSON($39), 4326),
-          NULL
+          NULL, NULL
         )`,
         [
           municipalityId,
@@ -144,51 +144,127 @@ export const uploadLandVPA = async (req, res) => {
       return res.status(200).json({ message: `No VPA data > 0 for ${municipalityRaw}` });
     }
 
-    const thresholds = [];
+    let currentPercent = 19.25;
     let cumulative = 0;
-    for (let i = 1; i <= 10; i++) {
-      cumulative += 11 - i; // 10 + 9 + 8 + ...
-    }
-
-    let runningTotal = 0;
     const decileBreakpoints = [];
+
     for (let i = 1; i <= 10; i++) {
-      runningTotal += 11 - i;
-      const index = Math.floor((runningTotal / cumulative) * total) - 1;
+      cumulative += currentPercent;
+      const index = Math.floor((cumulative / 100) * total) - 1;
       const rawValue = i === 10
         ? vpaRows[vpaRows.length - 1]
         : vpaRows[Math.max(0, Math.min(index, total - 1))];
       const rounded = Math.ceil(rawValue / 100) * 100;
       decileBreakpoints.push(rounded);
+      if (i < 10) currentPercent -= 92.5 / 45;
     }
 
-    const updateFields = decileBreakpoints
-      .map((val, i) => `vpa_max_decile_${i + 1} = ${val}`)
-      .join(", ");
+    for (let i = 0; i < 10; i++) {
+      await pool.query(
+        `INSERT INTO vpa_decile_breakpoints (municipality_id, decile, max_vpa)
+        VALUES ($1, $2, $3)
+        ON CONFLICT (municipality_id, decile)
+        DO UPDATE SET max_vpa = EXCLUDED.max_vpa`,
+        [municipalityId, i + 1, decileBreakpoints[i]]
+      );
+    }
 
     await pool.query(
-      `UPDATE municipality SET ${updateFields} WHERE id = $1`,
-      [municipalityId]
-    );
-
-    const updateDecileQuery = `
-      UPDATE parcel
-      SET vpa_decile = CASE
+      `UPDATE parcel SET vpa_decile = CASE
         ${decileBreakpoints.map((v, i) => {
-          const lowerBound = i === 0 ? 0 : decileBreakpoints[i - 1];
-          return `WHEN vpa > ${lowerBound} AND vpa <= ${v} THEN ${i + 1}`;
-        }).join("\n        ")}
+          const lower = i === 0 ? 0 : decileBreakpoints[i - 1];
+          return `WHEN vpa > ${lower} AND vpa <= ${v} THEN ${i + 1}`;
+        }).join("\n")}
         ELSE 0
       END
-      WHERE municipality_id = $1 AND vpa > 0
-    `;
-
-    await pool.query(updateDecileQuery, [municipalityId]);
+      WHERE municipality_id = $1 AND vpa > 0`,
+      [municipalityId]
+    );
 
     await pool.query(
       `UPDATE parcel SET vpa_decile = 0 WHERE municipality_id = $1 AND vpa = 0`,
       [municipalityId]
     );
+
+    for (let decile = 1; decile <= 3; decile++) {
+      const lower = decile === 1 ? 0 : decileBreakpoints[decile - 2];
+      const upper = decileBreakpoints[decile - 1];
+
+      const subRows = (
+        await pool.query(
+          `SELECT vpa FROM parcel
+          WHERE municipality_id = $1 AND vpa > $2 AND vpa <= $3
+          ORDER BY vpa ASC`,
+          [municipalityId, lower, upper]
+        )
+      ).rows.map(r => Number(r.vpa));
+
+      const subTotal = subRows.length;
+      if (subTotal === 0) continue;
+
+      if (subTotal <= 10) {
+        for (let i = 0; i < subTotal; i++) {
+          const rounded = Math.ceil(subRows[i] / 100) * 100;
+          await pool.query(
+            `INSERT INTO vpa_subdecile_breakpoints (municipality_id, decile, subdecile, max_vpa)
+            VALUES ($1, $2, $3, $4)
+            ON CONFLICT (municipality_id, decile, subdecile)
+            DO UPDATE SET max_vpa = EXCLUDED.max_vpa`,
+            [municipalityId, decile, i + 1, rounded]
+          );
+        }
+
+        await pool.query(
+          `UPDATE parcel SET vpa_subdecile = CASE
+            ${subRows.map((vpa, i) => `WHEN vpa = ${vpa} AND vpa_decile = ${decile} THEN ${i + 1}`).join('\n')}
+            ELSE NULL
+          END
+          WHERE municipality_id = $1 AND vpa_decile = $2`,
+          [municipalityId, decile]
+        );
+
+        continue;
+      }
+
+      let subCurrentPercent = 17.5;
+      let subCumulative = 0;
+      const subdecileBreakpoints = [];
+
+      for (let subdecile = 1; subdecile <= 10; subdecile++) {
+        subCumulative += subCurrentPercent;
+        let index = Math.floor((subCumulative / 100) * subTotal) - 1;
+        index = Math.max(0, Math.min(index, subTotal - 1));
+
+        const rawValue = subdecile === 10
+          ? subRows[subTotal - 1]
+          : subRows[index];
+
+        const rounded = Math.ceil(rawValue / 100) * 100;
+        subdecileBreakpoints.push(rounded);
+
+        await pool.query(
+          `INSERT INTO vpa_subdecile_breakpoints (municipality_id, decile, subdecile, max_vpa)
+          VALUES ($1, $2, $3, $4)
+          ON CONFLICT (municipality_id, decile, subdecile)
+          DO UPDATE SET max_vpa = EXCLUDED.max_vpa`,
+          [municipalityId, decile, subdecile, rounded]
+        );
+
+        if (subdecile < 10) subCurrentPercent -= 5 / 3;
+      }
+
+      await pool.query(
+        `UPDATE parcel SET vpa_subdecile = CASE
+          ${subdecileBreakpoints.map((maxVpa, i) => {
+            const lower = i === 0 ? 0 : subdecileBreakpoints[i - 1];
+            return `WHEN vpa > ${lower} AND vpa <= ${maxVpa} AND vpa_decile = ${decile} THEN ${i + 1}`;
+          }).join("\n")}
+          ELSE NULL
+        END
+        WHERE municipality_id = $1 AND vpa_decile = $2`,
+        [municipalityId, decile]
+      );
+    }
 
     res.status(200).json({ message: `LandVPA for ${municipalityRaw} uploaded and processed successfully` });
 

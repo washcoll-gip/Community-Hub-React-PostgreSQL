@@ -14,7 +14,9 @@ const MapView = ({
   onPolygonDrawn,
   onDrawCancel,
   drawnPolygon,
-  selectedBasemap
+  selectedBasemap,
+  subdecileMode,
+  selectedDecileForSub
 }) => {
   return (
     <Box sx={{ position: 'relative', width: '100%', height: '100%' }}>
@@ -67,20 +69,38 @@ const MapView = ({
         {/* Parcel Data Layer */}
         {geoData && (
           <GeoJSON
-            key={`${selectedMunicipality || selectedCounty}-${geoData?.features?.length || 0}`}
+            key={`${selectedMunicipality || selectedCounty}-${geoData?.features?.length || 0}-${subdecileMode ? selectedDecileForSub : 'all'}`}
             data={geoData}
             style={(feature) => {
-              const decile = feature.properties.vpa_decile;
+              const props = feature.properties;
+              const decile = props.vpa_decile;
+              const subdecile = props.vpa_subdecile;
               const defaultColor = "#3388ff";
+
+              if (subdecileMode) {
+                if (decile === selectedDecileForSub) {
+                  const color = getColorByDecile(subdecile);
+                  return {
+                    color,
+                    weight: 2,
+                    fillColor: color,
+                    fillOpacity: 0.6,
+                  };
+                } else {
+                  return { opacity: 0, fillOpacity: 0 };
+                }
+              }
+
               const color =
                 selectedMunicipality && decile > 0
                   ? getColorByDecile(decile)
                   : defaultColor;
+
               return {
                 color,
                 weight: 2,
                 fillColor: color,
-                fillOpacity: 0.5,
+                fillOpacity: 0.6,
               };
             }}
             onEachFeature={(feature, layer) => {

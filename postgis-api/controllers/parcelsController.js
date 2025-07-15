@@ -12,7 +12,7 @@ export const getParcels = async (req, res) => {
         p.bldg_story, p.resident, p.merge_, p.new_merge, p.notes, p.downtown, p.fid1, p.cityname,
         p.insidecore, p.outsidecore, p.yearbuiltcat, p.impvalperacre, p.dt_easton, p.developed,
         ST_AsGeoJSON(p.geom)::json AS geometry,
-        p.vpa_decile
+        p.vpa_decile, p.vpa_subdecile
       FROM parcel p
       JOIN municipality m ON p.municipality_id = m.id
     `;

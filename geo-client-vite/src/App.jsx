@@ -76,6 +76,22 @@ function App() {
   // Sidebar collapse state
   const [rightSidebarCollapsed, setRightSidebarCollapsed] = useState(false);
 
+  // States that control legend and map subdecile view
+  const [subdecileMode, setSubdecileMode] = useState(false);
+  const [selectedDecileForSub, setSelectedDecileForSub] = useState(null);
+
+  // Función para activar modo subdecile desde la leyenda
+  const handleSubdecileClick = (decile) => {
+    setSelectedDecileForSub(decile);
+    setSubdecileMode(true);
+  };
+
+  // Función para volver atrás en la leyenda
+  const handleBack = () => {
+    setSubdecileMode(false);
+    setSelectedDecileForSub(null);
+  };
+
   // Handler to start drawing
   const handleDrawPolygon = () => setIsDrawingPolygon(true);
   // Handler when polygon is drawn
@@ -277,9 +293,14 @@ function App() {
         {/* Legend - only show when a municipality is selected */}
         {showLandVPA && selectedMunicipality && (
           <Legend
+            API_URL={API_URL}
             municipalities={municipalities}
             selectedMunicipality={selectedMunicipality}
             getColorByDecile={getColorByDecile}
+            subdecileMode={subdecileMode}
+            selectedDecileForSub={selectedDecileForSub}
+            handleSubdecileClick={handleSubdecileClick}
+            handleBack={handleBack}
           />
         )}
 
@@ -358,8 +379,9 @@ function App() {
             onPolygonDrawn={handlePolygonDrawn}
             onDrawCancel={handleDrawCancel}
             drawnPolygon={drawnPolygon}
-            basemap={basemap}
             selectedBasemap={selectedBasemap}
+            subdecileMode={subdecileMode}
+            selectedDecileForSub={selectedDecileForSub}
           />
         </div>
 
