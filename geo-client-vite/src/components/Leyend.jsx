@@ -77,25 +77,28 @@ export default function Legend({
                 ? 0
                 : vpaMaxDeciles[selectedDecileForSub - 2];
 
-              return filteredSubdeciles
-                .slice()
-                .reverse()
-                .map((sub, i, arr) => {
-                  const upperBound = sub.max_vpa;
-                  const lowerBound = i === arr.length - 1
-                    ? lowerDecileLimit
-                    : arr[i + 1].max_vpa;
+              return [
+                ...filteredSubdeciles
+                  .slice()
+                  .reverse()
+                  .map((sub, i, arr) => {
+                    const upperBound = sub.max_vpa;
+                    const lowerBound = i === arr.length - 1
+                      ? lowerDecileLimit
+                      : arr[i + 1].max_vpa;
 
-                  const label = `> ${lowerBound} - ${upperBound}`;
+                    const label = `> ${lowerBound} - ${upperBound}`;
 
-                  return (
-                    <LegendRow
-                      key={`subdecile-${sub.subdecile}-${sub.max_vpa}`}
-                      color={getColorByDecile(sub.subdecile)}
-                      label={label}
-                    />
-                  );
-                });
+                    return (
+                      <LegendRow
+                        key={`subdecile-${sub.subdecile}-${sub.max_vpa}`}
+                        color={getColorByDecile(sub.subdecile)}
+                        label={label}
+                      />
+                    );
+                  }),
+                <LegendRow key={"out-of-range"} color={getColorByDecile(0)} label=" OUT OF RANGE" />
+              ];
             })()}
           </>
         ) : (
