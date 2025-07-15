@@ -87,7 +87,13 @@ const MapView = ({
                     fillOpacity: 0.6,
                   };
                 } else {
-                  return { opacity: 0, fillOpacity: 0 };
+                  const color = defaultColor;
+                  return {
+                    color,
+                    weight: 2,
+                    fillColor: color,
+                    fillOpacity: 0.4, // Dim color for non-selected deciles
+                  };
                 }
               }
 
