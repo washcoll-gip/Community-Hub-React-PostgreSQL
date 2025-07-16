@@ -33,7 +33,7 @@ export const createTables = async () => {
     CREATE TABLE IF NOT EXISTS vpa_subdecile_breakpoints (
       id SERIAL PRIMARY KEY,
       municipality_id INTEGER REFERENCES municipality(id) ON DELETE CASCADE,
-      decile INTEGER NOT NULL CHECK (decile BETWEEN 1 AND 3),
+      decile INTEGER NOT NULL CHECK (decile BETWEEN 1 AND 4),
       subdecile INTEGER NOT NULL CHECK (subdecile BETWEEN 1 AND 10),
       max_vpa INTEGER NOT NULL,
       UNIQUE (municipality_id, decile, subdecile)

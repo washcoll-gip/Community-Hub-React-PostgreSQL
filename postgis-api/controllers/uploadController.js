@@ -186,7 +186,7 @@ export const uploadLandVPA = async (req, res) => {
       [municipalityId]
     );
 
-    for (let decile = 1; decile <= 3; decile++) {
+    for (let decile = 1; decile <= 4; decile++) {
       const lower = decile === 1 ? 0 : decileBreakpoints[decile - 2];
       const upper = decileBreakpoints[decile - 1];
 
@@ -226,7 +226,7 @@ export const uploadLandVPA = async (req, res) => {
         continue;
       }
 
-      let subCurrentPercent = 17.5;
+      let subCurrentPercent = 12.5;
       let subCumulative = 0;
       const subdecileBreakpoints = [];
 
@@ -250,7 +250,7 @@ export const uploadLandVPA = async (req, res) => {
           [municipalityId, decile, subdecile, rounded]
         );
 
-        if (subdecile < 10) subCurrentPercent -= 5 / 3;
+        if (subdecile < 10) subCurrentPercent -= 25 / 45;
       }
 
       await pool.query(

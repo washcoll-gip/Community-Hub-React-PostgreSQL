@@ -84,7 +84,7 @@ export const getVpaSubdecileBreakpoints = async (req, res) => {
   const municipalityId = parseInt(req.params.id);
   const decile = parseInt(req.params.decile);
 
-  if (isNaN(municipalityId) || isNaN(decile) || decile < 1 || decile > 3) {
+  if (isNaN(municipalityId) || isNaN(decile) || decile < 1 || decile > 4) {
     return res.status(400).json({ error: "Invalid municipality ID or decile" });
   }
 
