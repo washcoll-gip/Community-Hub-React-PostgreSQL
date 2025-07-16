@@ -190,6 +190,11 @@ function App() {
     fetchData();
   }, [fetchData]);
 
+  useEffect(() => {
+    setSubdecileMode(false);
+    setSelectedDecileForSub(null);
+  }, [selectedCounty, selectedMunicipality]);
+
   // Event handlers
   const handleCountyChange = useCallback((county) => {
     setSelectedCounty(county);

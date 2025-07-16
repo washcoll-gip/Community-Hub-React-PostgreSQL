@@ -65,17 +65,21 @@ export default function Legend({
       <div style={{ marginTop: 8 }}>
         {subdecileMode ? (
           <>
-            <button onClick={handleBack} style={{ marginBottom: 10, fontSize: 14, cursor: "pointer" }}>
+            <button 
+              onClick={handleBack}
+              style={{ marginBottom: 10, fontSize: 14, cursor: "pointer" }}
+            >
               ← Back
             </button>
             {(() => {
               const filteredSubdeciles = vpaSubdeciles
-                .filter(sub => sub.max_vpa !== null && sub.max_vpa !== undefined)
+                .filter((sub) => sub.max_vpa !== null && sub.max_vpa !== undefined)
                 .sort((a, b) => a.subdecile - b.subdecile);
 
-              const lowerDecileLimit = selectedDecileForSub === 1
-                ? 0
-                : vpaMaxDeciles[selectedDecileForSub - 2];
+              const isIncomplete = filteredSubdeciles.length < 10;
+
+              const lowerDecileLimit =
+                selectedDecileForSub === 1 ? 0 : vpaMaxDeciles[selectedDecileForSub - 2];
 
               return [
                 ...filteredSubdeciles
@@ -83,11 +87,12 @@ export default function Legend({
                   .reverse()
                   .map((sub, i, arr) => {
                     const upperBound = sub.max_vpa;
-                    const lowerBound = i === arr.length - 1
-                      ? lowerDecileLimit
-                      : arr[i + 1].max_vpa;
+                    const lowerBound =
+                      i === arr.length - 1 ? lowerDecileLimit : arr[i + 1].max_vpa;
 
-                    const label = `> ${lowerBound} - ${upperBound}`;
+                    const label = isIncomplete
+                      ? `≈ ${upperBound}`
+                      : `> ${lowerBound} - ${upperBound}`;
 
                     return (
                       <LegendRow
@@ -97,7 +102,11 @@ export default function Legend({
                       />
                     );
                   }),
-                <LegendRow key={"out-of-range"} color={getColorByDecile(0)} label=" OUT OF RANGE" />
+                <LegendRow
+                  key={"out-of-range"}
+                  color={getColorByDecile(0)}
+                  label=" OUT OF RANGE"
+                />,
               ];
             })()}
           </>
