@@ -13,14 +13,19 @@ const LayerToggleControls = ({
   setShowLandVPA,
   showFoodAccess,
   setShowFoodAccess,
+  showSlr,
+  setShowSlr,
   uploadedFiles,
   API_URL,
   selectedCounty
 }) => {
+  console.log("uploadedFiles:", uploadedFiles);
+
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [expandedSections, setExpandedSections] = useState({
     landvpa: true,
     foodaccesspoints: true,
+    slr: true,
   });
 
   const onToggleCollapse = () => setIsCollapsed((prev) => !prev);
@@ -115,11 +120,14 @@ const LayerToggleControls = ({
             Object.entries(uploadedFiles).map(([type, files]) => {
               const isLand = type === "landvpa";
               const isFood = type === "foodaccesspoints";
+              const isSlr = type === "slr";
               const isVisible = isLand
                 ? showLandVPA
                 : isFood
                 ? showFoodAccess
-                : null;
+                : isSlr
+                ? showSlr
+                : true;
               const expanded = expandedSections[type];
               return (
                 <div key={type} style={{ borderBottom: "1px solid #ececec", marginBottom: 2 }}>
@@ -137,23 +145,30 @@ const LayerToggleControls = ({
                     }}
                   >
                     <span style={{display: 'flex', alignItems: 'center', gap: 4}}>
-                      {isLand
-                        ? <LayersIcon fontSize="small" style={{color: '#1976d2'}} />
-                        : isFood
-                        ? <InsertDriveFileIcon fontSize="small" style={{color: '#e67e22'}} />
-                        : <InsertDriveFileIcon fontSize="small" style={{color: '#757575'}} />}
+                      {isLand ? (
+                        <LayersIcon fontSize="small" style={{ color: "#1976d2" }} />
+                      ) : isFood ? (
+                        <InsertDriveFileIcon fontSize="small" style={{ color: "#e67e22" }} />
+                      ) : isSlr ? (
+                        <InsertDriveFileIcon fontSize="small" style={{ color: "#007bff" }} />
+                      ) : (
+                        <InsertDriveFileIcon fontSize="small" style={{ color: "#757575" }} />
+                      )}
                       {isLand
                         ? "Land & Property Data"
                         : isFood
                         ? "Food Access Points"
+                        : isSlr
+                        ? "Sea Level Rise"
                         : type}
                     </span>
                     <div style={{ display: "flex", gap: "0.25em" }}>
-                      {(isLand || isFood) && (
+                      {(isLand || isFood || isSlr) && (
                         <button
                           onClick={() => {
                             if (isLand) setShowLandVPA((prev) => !prev);
                             if (isFood) setShowFoodAccess((prev) => !prev);
+                            if (isSlr) setShowSlr((prev) => !prev);
                           }}
                           style={{
                             width: "24px",

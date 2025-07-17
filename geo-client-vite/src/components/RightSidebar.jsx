@@ -5,6 +5,7 @@ import DownloadIcon from '@mui/icons-material/Download';
 import CloseIcon from '@mui/icons-material/Close';
 import FolderIcon from '@mui/icons-material/Folder';
 import PublicIcon from '@mui/icons-material/Public';
+import WavesIcon from '@mui/icons-material/Waves';
 import LocationCityIcon from '@mui/icons-material/LocationCity';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
@@ -60,6 +61,7 @@ const UploadPanel = ({
             <MenuItem value="">Choose Data Type</MenuItem>
             <MenuItem value="landvpa"><PublicIcon sx={{ mr: 1, fontSize: 16 }} />Land & Property Data</MenuItem>
             <MenuItem value="foodaccesspoints"><FolderIcon sx={{ mr: 1, fontSize: 16 }} />Food Access Points</MenuItem>
+            <MenuItem value="slr"><WavesIcon sx={{ mr: 1, fontSize: 16 }} />Sea Level Rise</MenuItem>
           </Select>
         </FormControl>
         {uploadType === "landvpa" && (
@@ -160,7 +162,7 @@ const UploadPanel = ({
               uploading ||
               !uploadType ||
               (uploadType === "landvpa" && (!uploadCounty || !uploadMunicipality || !uploadFile)) ||
-              (uploadType === "foodaccesspoints" && !uploadFile)
+              ((uploadType === "foodaccesspoints" || uploadType === "slr") && !uploadFile)
             }
             fullWidth
             size="small"
@@ -236,8 +238,13 @@ const DownloadPanel = ({
           Object.entries(uploadedFiles).map(([type, files]) => (
             <Box key={type} sx={{ mb: 1 }}>
               <Typography variant="body2" sx={{ fontWeight: 600, color: 'text.secondary', mb: 0.5, fontSize: '12px' }}>
-                {type === 'landvpa' ? <PublicIcon sx={{ mr: 1, fontSize: 15 }} /> : <FolderIcon sx={{ mr: 1, fontSize: 15 }} />}
-                {type === 'landvpa' ? 'Land & Property Data' : 'Food Access Points'}
+                {type === 'landvpa' ? <PublicIcon sx={{ mr: 1, fontSize: 15 }} /> :
+                type === 'slr' ? <WaterIcon sx={{ mr: 1, fontSize: 15 }} /> :
+                <FolderIcon sx={{ mr: 1, fontSize: 15 }} />}
+                
+                {type === 'landvpa' ? 'Land & Property Data' :
+                type === 'slr' ? 'Sea Level Rise' :
+                'Food Access Points'}
               </Typography>
               {Array.isArray(files) && files.map(file => (
                 <Box key={file.filename} sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 0.5, p: 0.5, borderRadius: 1, bgcolor: '#f7f7f9' }}>

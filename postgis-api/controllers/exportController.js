@@ -181,6 +181,31 @@ export const exportFullData = async (req, res) => {
       });
     }
 
+    const slrResult = await pool.query(`
+      SELECT row_to_json(fc)
+      FROM (
+        SELECT 
+          'FeatureCollection' AS type,
+          array_to_json(array_agg(f)) AS features
+        FROM (
+          SELECT 
+            'Feature' AS type,
+            ST_AsGeoJSON(geom)::json AS geometry,
+            to_jsonb(t) - 'geom' AS properties
+          FROM (
+            SELECT * FROM slr_parcels
+          ) AS t
+        ) AS f
+      ) AS fc
+    `);
+
+    if (slrResult.rows[0]?.row_to_json) {
+      filesToExport.push({
+        name: "slr-parcels/slr_parcels.geojson",
+        content: JSON.stringify(slrResult.rows[0].row_to_json, null, 2)
+      });
+    }
+
     if (filesToExport.length === 0) {
       return res.status(404).json({ error: "No data available for full export." });
     }

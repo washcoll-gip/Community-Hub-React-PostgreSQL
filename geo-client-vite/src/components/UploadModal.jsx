@@ -119,6 +119,7 @@ const UploadModal = ({
                 <option value="">Choose Data Type</option>
                 <option value="landvpa">🏘️ Land & Property Data (LandVPA)</option>
                 <option value="foodaccesspoints">🍎 Food Access Points</option>
+                <option value="slr">🌊 Sea Level Rise Data</option>
               </select>
             </label>
           </div>
@@ -301,28 +302,39 @@ const UploadModal = ({
                 uploading ||
                 !uploadType ||
                 (uploadType === "landvpa" && (!uploadCounty || !uploadMunicipality || !uploadFile)) ||
-                (uploadType === "foodaccesspoints" && !uploadFile)
+                ((uploadType === "foodaccesspoints" || uploadType === "slr") && !uploadFile)
               }
               style={{
                 flex: "2",
                 padding: "12px",
-                background: uploading ? "#28a745" : 
-                  (uploadType && uploadFile && 
-                   (uploadType !== "landvpa" || (uploadCounty && uploadMunicipality))) 
-                  ? "linear-gradient(135deg, #28a745, #20c997)" 
+                background: uploading
+                  ? "#28a745"
+                  : uploadType && uploadFile && (
+                      uploadType !== "landvpa"
+                        ? true
+                        : (uploadCounty && uploadMunicipality)
+                    )
+                  ? "linear-gradient(135deg, #28a745, #20c997)"
                   : "#e9ecef",
-                color: uploading ? "white" : 
-                  (uploadType && uploadFile && 
-                   (uploadType !== "landvpa" || (uploadCounty && uploadMunicipality))) 
-                  ? "white" 
+                color: uploading
+                  ? "white"
+                  : uploadType && uploadFile && (
+                      uploadType !== "landvpa"
+                        ? true
+                        : (uploadCounty && uploadMunicipality)
+                    )
+                  ? "white"
                   : "#6c757d",
                 border: "none",
                 borderRadius: "6px",
                 fontSize: "14px",
                 fontWeight: "500",
-                cursor: uploading || !uploadType || !uploadFile ? "not-allowed" : "pointer",
+                cursor:
+                  uploading || !uploadType || !uploadFile
+                    ? "not-allowed"
+                    : "pointer",
                 transition: "all 0.2s ease",
-                opacity: uploading ? 0.8 : 1
+                opacity: uploading ? 0.8 : 1,
               }}
             >
               {uploading ? "⏳ Uploading..." : "📤 Upload Data"}

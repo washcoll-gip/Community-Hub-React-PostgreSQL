@@ -7,6 +7,7 @@ const MapView = ({
   countyData, 
   geoData, 
   foodPoints, 
+  slrParcelsData,
   selectedCounty, 
   selectedMunicipality,
   getColorByDecile,
@@ -137,6 +138,23 @@ const MapView = ({
                 fillOpacity: 0.8
               })
             }
+            onEachFeature={(feature, layer) => {
+              const props = feature.properties;
+              let popupContent = "<table style='font-size: 12px;'>";
+              for (const key in props) {
+                popupContent += `<tr><td style='font-weight: bold; text-align: left; padding: 2px 8px 2px 0;'>${key}</td><td style='padding: 2px;'>${props[key]}</td></tr>`;
+              }
+              popupContent += "</table>";
+              layer.bindPopup(popupContent);
+            }}
+          />
+        )}
+        {/* SLR Parcels Layer */}
+        {slrParcelsData && (
+          <GeoJSON 
+            key={`slrparcels-${slrParcelsData.features?.length || 0}`}
+            data={slrParcelsData} 
+            style={{ color: "pink", weight: 1, fillColor: "pink", fillOpacity: 0.3, opacity: 0.6 }} 
             onEachFeature={(feature, layer) => {
               const props = feature.properties;
               let popupContent = "<table style='font-size: 12px;'>";

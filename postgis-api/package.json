@@ -20,7 +20,8 @@
     "drizzle-orm": "^0.44.2",
     "express": "^5.1.0",
     "multer": "^2.0.1",
-    "pg": "^8.16.0"
+    "pg": "^8.16.0",
+    "stream-json": "^1.9.1"
   },
   "devDependencies": {
     "drizzle-kit": "^0.31.4"

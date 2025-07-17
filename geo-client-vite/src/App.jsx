@@ -40,7 +40,8 @@ function App() {
   const [countyData, setCountyData] = useState(null);
   const [municipalities, setMunicipalities] = useState([]);
   const [foodPoints, setFoodPoints] = useState(null);
-  const [uploadedFiles, setUploadedFiles] = useState([]);
+  const [uploadedFiles, setUploadedFiles] = useState({});
+  const [slrParcelsData, setSlrParcelsData] = useState(null);
 
   // Filter state
   const [selectedCounty, setSelectedCounty] = useState("");
@@ -64,6 +65,7 @@ function App() {
   //Toggle layer visibility
   const [showLandVPA, setShowLandVPA] = useState(true);
   const [showFoodAccess, setShowFoodAccess] = useState(true);
+  const [showSlrParcels, setShowSlrParcels] = useState(true);
 
   // Polygon drawing state
   const [isDrawingPolygon, setIsDrawingPolygon] = useState(false);
@@ -167,6 +169,19 @@ function App() {
         setFoodPoints(null);
       }
 
+      // Load Sea Level Rise parcels (always without filters)
+      if (showSlrParcels) {
+        try {
+          const slrData = await request('/api/slrparcels');
+          setSlrParcelsData(slrData);
+        } catch (err) {
+          console.warn('SLR parcels not available:', err);
+          setSlrParcelsData(null);
+        }
+      } else {
+        setSlrParcelsData(null);
+      }
+
       // Load uploaded files list
       try {
         const filesData = await request('/api/files');
@@ -182,6 +197,7 @@ function App() {
     selectedMunicipality,
     showLandVPA,
     showFoodAccess,
+    showSlrParcels,
     request,
     addNotification
   ]);
@@ -238,6 +254,7 @@ function App() {
       const labels = {
         landvpa: "LandVPA data",
         foodaccesspoints: "Food Access Points",
+        slr: "Sea Level Rise Parcels",
       };
       addNotification(`${labels[uploadType]} uploaded successfully!`, "success");
       fetchData();
@@ -277,6 +294,8 @@ function App() {
             setShowLandVPA={setShowLandVPA}
             showFoodAccess={showFoodAccess}
             setShowFoodAccess={setShowFoodAccess}
+            showSlr={showSlrParcels}
+            setShowSlr={setShowSlrParcels}
             uploadedFiles={uploadedFiles}
             API_URL={API_URL}
             selectedCounty={selectedCounty}
@@ -377,6 +396,7 @@ function App() {
             countyData={countyData}
             geoData={geoData}
             foodPoints={foodPoints}
+            slrParcelsData={slrParcelsData}
             selectedCounty={selectedCounty}
             selectedMunicipality={selectedMunicipality}
             getColorByDecile={getColorByDecile}

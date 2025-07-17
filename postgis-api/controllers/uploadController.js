@@ -1,5 +1,78 @@
-import pool from "../db/pool.js";
+import fs from 'fs';
+import path from 'path';
 import { cleanProperties } from "../utils/fileHelpers.js";
+import pool from '../db/pool.js';
+
+export const uploadSLRParcels = async (req, res) => {
+  try {
+    const { file } = req;
+    if (!file) return res.status(400).json({ error: "No file uploaded" });
+
+    const rawData = JSON.parse(file.buffer.toString());
+    const features = rawData.features;
+
+    if (!features || !Array.isArray(features)) {
+      return res.status(400).json({ error: "Invalid GeoJSON structure" });
+    }
+
+    await client.query(
+      `INSERT INTO uploaded_files (filename, upload_type) VALUES ($1, 'slr')`,
+      [file.originalname]
+    );
+
+    const client = await pool.connect();
+
+    const insertQuery = `
+      INSERT INTO slr_parcels (
+        OBJECTID, MergeID, County, PIN, LU, YearBuilt, land_val, bldg_val, mrkt_val, 
+        U3VAL, tax_val, CALC_AREA, VPA, acres, acres_new, acres_rat, bldgval_new, 
+        landval_new, U3val_new, vpa_new, lulc_acres, LandUseU3, city, geom
+      ) VALUES (
+        $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, 
+        $17, $18, $19, $20, $21, $22, $23,
+        ST_SetSRID(ST_GeomFromGeoJSON($24), 4326)
+      )
+    `;
+
+    for (const feature of features) {
+      const p = feature.properties;
+      const geom = JSON.stringify(feature.geometry);
+
+      await client.query(insertQuery, [
+        p.OBJECTID || null,
+        p.MergeID || null,
+        p.County || null,
+        p.PIN || null,
+        p.LU || null,
+        p.YearBuilt || null,
+        p.land_val || null,
+        p.bldg_val || null,
+        p.mrkt_val || null,
+        p.U3VAL || null,
+        p.tax_val || null,
+        p.CALC_AREA || null,
+        p.VPA || null,
+        p.acres || null,
+        p.acres_new || null,
+        p.acres_rat || null,
+        p.bldgval_new || null,
+        p.landval_new || null,
+        p.U3val_new || null,
+        p.vpa_new || null,
+        p.lulc_acres || null,
+        p.LandUseU3 || null,
+        p.city || null,
+        geom,
+      ]);
+    }
+
+    client.release();
+    res.json({ message: "SLR Parcels uploaded successfully" });
+  } catch (err) {
+    console.error("Upload SLR Error:", err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
 
 export const uploadFoodAccessPoints = async (req, res) => {
   if (!req.file) return res.status(400).json({ error: "File is required" });
@@ -186,7 +259,7 @@ export const uploadLandVPA = async (req, res) => {
       [municipalityId]
     );
 
-    for (let decile = 1; decile <= 4; decile++) {
+    for (let decile = 1; decile <= 5; decile++) {
       const lower = decile === 1 ? 0 : decileBreakpoints[decile - 2];
       const upper = decileBreakpoints[decile - 1];
 

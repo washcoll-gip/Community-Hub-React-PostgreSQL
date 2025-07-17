@@ -1,5 +1,3 @@
-import fs from "fs";
-import path from "path";
 import pool from "../db/pool.js";
 
 export const getUploadedFiles = async (req, res) => {
@@ -74,31 +72,65 @@ export const downloadFile = async (req, res) => {
       return;
     }
 
-    const foodResult = await pool.query(
-      `SELECT row_to_json(fc)
-       FROM (
-         SELECT 
-           'FeatureCollection' AS type,
-           array_to_json(array_agg(f)) AS features
+    if (filename === "Food_Access_Points.geojson") {
+      const foodResult = await pool.query(
+        `SELECT row_to_json(fc)
          FROM (
            SELECT 
-             'Feature' AS type,
-             ST_AsGeoJSON(geometry)::json AS geometry,
-             to_jsonb(t) - 'geometry' AS properties
+             'FeatureCollection' AS type,
+             array_to_json(array_agg(f)) AS features
            FROM (
-             SELECT * FROM food_access_points
-           ) AS t
-         ) AS f
-       ) AS fc`
-    );
+             SELECT 
+               'Feature' AS type,
+               ST_AsGeoJSON(geometry)::json AS geometry,
+               to_jsonb(t) - 'geometry' AS properties
+             FROM (
+               SELECT * FROM food_access_points
+             ) AS t
+           ) AS f
+         ) AS fc`
+      );
 
-    if (!foodResult.rows[0]?.row_to_json) {
-      return res.status(404).json({ error: "No food access point data found." });
+      if (!foodResult.rows[0]?.row_to_json) {
+        return res.status(404).json({ error: "No food access point data found." });
+      }
+
+      res.setHeader("Content-Type", "application/geo+json");
+      res.setHeader("Content-Disposition", `attachment; filename=${filename}`);
+      res.send(JSON.stringify(foodResult.rows[0].row_to_json, null, 2));
+      return;
     }
 
-    res.setHeader("Content-Type", "application/geo+json");
-    res.setHeader("Content-Disposition", `attachment; filename=${filename}`);
-    res.send(JSON.stringify(foodResult.rows[0].row_to_json, null, 2));
+    if (filename === "Sea_Level_Rise.geojson") {
+      const slrResult = await pool.query(
+        `SELECT row_to_json(fc)
+         FROM (
+           SELECT 
+             'FeatureCollection' AS type,
+             array_to_json(array_agg(f)) AS features
+           FROM (
+             SELECT 
+               'Feature' AS type,
+               ST_AsGeoJSON(geometry)::json AS geometry,
+               to_jsonb(t) - 'geometry' AS properties
+             FROM (
+               SELECT * FROM sea_level_rise
+             ) AS t
+           ) AS f
+         ) AS fc`
+      );
+
+      if (!slrResult.rows[0]?.row_to_json) {
+        return res.status(404).json({ error: "No sea level rise data found." });
+      }
+
+      res.setHeader("Content-Type", "application/geo+json");
+      res.setHeader("Content-Disposition", `attachment; filename=${filename}`);
+      res.send(JSON.stringify(slrResult.rows[0].row_to_json, null, 2));
+      return;
+    }
+
+    return res.status(400).json({ error: "Unrecognized filename format." });
   } catch (err) {
     console.error("Error in downloadFile:", err);
     res.status(500).json({ error: "Internal server error." });

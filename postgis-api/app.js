@@ -9,6 +9,7 @@ import municipalitiesRoutes from "./routes/municipalities.js";
 import foodAccessRoutes from "./routes/foodAccess.js";
 import filesRoutes from "./routes/files.js";
 import exportRoutes from "./routes/export.js";
+import slrParcelsRoutes from "./routes/slrParcels.js";
 
 dotenv.config();
 
@@ -34,5 +35,6 @@ app.use("/api/municipalities", municipalitiesRoutes);
 app.use("/api/foodaccesspoints", foodAccessRoutes);
 app.use("/api/files", filesRoutes);
 app.use("/api/export", exportRoutes);
+app.use("/api/slrparcels", slrParcelsRoutes);
 
 export default app;

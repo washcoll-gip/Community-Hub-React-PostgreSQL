@@ -186,6 +186,7 @@ const DownloadModal = ({
                   }}>
                     {type === 'landvpa' ? '🏘️ Land & Property Data' : 
                      type === 'foodaccesspoints' ? '🍎 Food Access Points' : 
+                     type === 'slrparcels' ? '🌊 Sea Level Rise Parcels' :
                      `📄 ${type}`}
                   </div>
                   {Array.isArray(files) && files.map(file => (

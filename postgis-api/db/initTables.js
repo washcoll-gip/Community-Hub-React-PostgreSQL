@@ -33,7 +33,7 @@ export const createTables = async () => {
     CREATE TABLE IF NOT EXISTS vpa_subdecile_breakpoints (
       id SERIAL PRIMARY KEY,
       municipality_id INTEGER REFERENCES municipality(id) ON DELETE CASCADE,
-      decile INTEGER NOT NULL CHECK (decile BETWEEN 1 AND 4),
+      decile INTEGER NOT NULL CHECK (decile BETWEEN 1 AND 5),
       subdecile INTEGER NOT NULL CHECK (subdecile BETWEEN 1 AND 10),
       max_vpa INTEGER NOT NULL,
       UNIQUE (municipality_id, decile, subdecile)
@@ -113,6 +113,34 @@ export const createTables = async () => {
       filename TEXT NOT NULL,
       upload_type TEXT NOT NULL,
       upload_date TIMESTAMP DEFAULT NOW()
+    );
+
+    CREATE TABLE IF NOT EXISTS slr_parcels (
+      id SERIAL PRIMARY KEY,
+      OBJECTID INTEGER,
+      MergeID TEXT,
+      County TEXT,
+      PIN TEXT,
+      LU TEXT,
+      YearBuilt INTEGER,
+      land_val INTEGER,
+      bldg_val INTEGER,
+      mrkt_val INTEGER,
+      U3VAL INTEGER,
+      tax_val INTEGER,
+      CALC_AREA REAL,
+      VPA REAL,
+      acres REAL,
+      acres_new REAL,
+      acres_rat REAL,
+      bldgval_new INTEGER,
+      landval_new INTEGER,
+      U3val_new INTEGER,
+      vpa_new INTEGER,
+      lulc_acres REAL,
+      LandUseU3 TEXT,
+      city TEXT,
+      geom GEOMETRY(MultiPolygon, 4326)
     );
 
     INSERT INTO county (name) VALUES 
