@@ -239,7 +239,7 @@ const DownloadPanel = ({
             <Box key={type} sx={{ mb: 1 }}>
               <Typography variant="body2" sx={{ fontWeight: 600, color: 'text.secondary', mb: 0.5, fontSize: '12px' }}>
                 {type === 'landvpa' ? <PublicIcon sx={{ mr: 1, fontSize: 15 }} /> :
-                type === 'slr' ? <WaterIcon sx={{ mr: 1, fontSize: 15 }} /> :
+                type === 'slr' ? <WavesIcon sx={{ mr: 1, fontSize: 15 }} /> :
                 <FolderIcon sx={{ mr: 1, fontSize: 15 }} />}
                 
                 {type === 'landvpa' ? 'Land & Property Data' :

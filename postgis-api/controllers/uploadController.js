@@ -15,12 +15,12 @@ export const uploadSLRParcels = async (req, res) => {
       return res.status(400).json({ error: "Invalid GeoJSON structure" });
     }
 
+    const client = await pool.connect();
+
     await client.query(
       `INSERT INTO uploaded_files (filename, upload_type) VALUES ($1, 'slr')`,
       [file.originalname]
     );
-
-    const client = await pool.connect();
 
     const insertQuery = `
       INSERT INTO slr_parcels (
