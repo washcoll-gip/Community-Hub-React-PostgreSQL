@@ -16,7 +16,7 @@ dotenv.config();
 const app = express();
 
 const allowedOrigins = [
-  "gip-community-hub.netlify.app",
+  "https://gip-community-hub.netlify.app",
   "https://es-community-hub.netlify.app",
   "http://localhost:5173"
 ];
